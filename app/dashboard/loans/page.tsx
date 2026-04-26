@@ -94,7 +94,11 @@ export default function LoansPage() {
               ) : (
                 filteredLoans.map((loan) => (
                   <tr key={loan.id} className="border-b border-[#262626] transition-colors hover:bg-[#1a1a1a]">
-                    <td className="p-4 text-white font-sans">{loan.borrowerId || 'غير محدد'}</td>
+                    <td className="p-4 text-white font-sans">
+                      <Link href={`/dashboard/loans/${loan.id}`} className="hover:text-[#10b981] transition-colors hover:underline">
+                        {loan.borrowerId || 'غير محدد'}
+                      </Link>
+                    </td>
                     <td className="p-4 text-[#ededed]" dir="ltr">{(loan.assetValue || 0).toLocaleString()} د.ع</td>
                     <td className="p-4 text-[#737373]">{loan.tenure} شهر</td>
                     <td className="p-4 text-[#ededed]">{new Date(loan.nextDue).toLocaleDateString('ar-IQ')}</td>
@@ -110,7 +114,7 @@ export default function LoansPage() {
                       )}
                     </td>
                     <td className="p-4">
-                      <button className="text-xs text-[#10b981] underline hover:text-[#34d399]">إدارة</button>
+                      <Link href={`/dashboard/loans/${loan.id}`} className="text-xs text-[#10b981] underline hover:text-[#34d399]">إدارة</Link>
                     </td>
                   </tr>
                 ))

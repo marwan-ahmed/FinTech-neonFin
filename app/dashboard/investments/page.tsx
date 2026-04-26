@@ -67,7 +67,7 @@ export default function InvestmentsPage() {
                     <td className="p-4 text-[#737373]">{inv.type === 'institutional' ? 'مؤسسي' : 'أفراد'}</td>
                     <td className="p-4 text-[#ededed]" dir="ltr">{(inv.capital || 0).toLocaleString()} د.ع</td>
                     <td className="p-4 text-[#ededed]">
-                       {inv.createdAt ? new Date(inv.createdAt.toDate()).toLocaleDateString('ar-IQ') : '-'}
+                       {inv.createdAt ? new Date(inv.createdAt).toLocaleDateString('ar-IQ') : '-'}
                     </td>
                   </tr>
                 ))
