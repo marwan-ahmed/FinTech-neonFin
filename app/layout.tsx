@@ -1,0 +1,22 @@
+import type {Metadata} from 'next';
+import { Tajawal } from 'next/font/google';
+import './globals.css'; // Global styles
+
+const tajawal = Tajawal({
+  subsets: ['arabic'],
+  weight: ['200', '300', '400', '500', '700', '800', '900'],
+  variable: '--font-sans',
+});
+
+export const metadata: Metadata = {
+  title: 'نيون فين - وساطة رقمية للتقنية المالية',
+  description: 'منصة وساطة مالية تربط المستثمرين والعملاء في العراق بسلاسة وأمان.',
+};
+
+export default function RootLayout({children}: {children: React.ReactNode}) {
+  return (
+    <html lang="ar" dir="rtl">
+      <body className={`${tajawal.variable} bg-[#0a0a0a] text-[#ededed] font-sans flex flex-col min-h-screen`} suppressHydrationWarning>{children}</body>
+    </html>
+  );
+}

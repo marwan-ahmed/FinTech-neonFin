@@ -1,0 +1,6 @@
+{
+  "name": "FinTech-neonFin",
+  "description": "FinTech brokerage platform connecting investors, company, and customers with micro-investing and automated collections, using Next.js, Neon DB, and Firebase Auth.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
