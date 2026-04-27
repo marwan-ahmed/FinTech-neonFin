@@ -11,6 +11,7 @@ export default function DashboardNav() {
     { href: '/dashboard/investments', label: 'محافظ الاستثمار' },
     { href: '/dashboard/loans', label: 'إدارة القروض' },
     { href: '/dashboard/kyc', label: 'طلبات التحقق (KYC)' },
+    { href: '/dashboard/account', label: 'حسابي' },
   ];
 
   return (

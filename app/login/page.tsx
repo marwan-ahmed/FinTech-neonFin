@@ -2,20 +2,29 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { getFirebaseAuth } from '@/lib/firebase';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSignUp && password !== confirmPassword) {
+      setError('كلمة المرور غير متطابقة');
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -23,12 +32,13 @@ export default function LoginPage() {
       let userCredential;
       if (isSignUp) {
         userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(userCredential.user, { displayName: fullName });
       } else {
         userCredential = await signInWithEmailAndPassword(auth, email, password);
       }
       
-      const idToken = await userCredential.user.getIdToken();
-      await createSession(idToken);
+      const idToken = await userCredential.user.getIdToken(true);
+      await createSession(idToken, isSignUp ? { fullName, phoneNumber } : undefined);
     } catch (err: any) {
       handleAuthError(err);
     } finally {
@@ -36,13 +46,13 @@ export default function LoginPage() {
     }
   };
 
-  const createSession = async (idToken: string) => {
+  const createSession = async (idToken: string, profileData?: { fullName: string, phoneNumber: string }) => {
     const res = await fetch('/api/auth', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ idToken }),
+      body: JSON.stringify({ idToken, ...profileData }),
     });
 
     if (res.ok) {
@@ -109,6 +119,33 @@ export default function LoginPage() {
         )}
 
         <form onSubmit={handleEmailAuth} className="flex flex-col gap-4 mb-6">
+          {isSignUp && (
+            <>
+              <div>
+                <label className="mb-1 block text-[10px] uppercase tracking-widest text-[#737373]">الاسم الكامل</label>
+                <input 
+                  type="text" 
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="w-full rounded border border-[#262626] bg-[#0f0f0f] px-3 py-2 text-sm text-[#ededed] focus:border-[#10b981] focus:outline-none focus:ring-1 focus:ring-[#10b981]" 
+                  placeholder="محمد أحمد"
+                  required={isSignUp}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-[10px] uppercase tracking-widest text-[#737373]">رقم الهاتف</label>
+                <input 
+                  type="tel" 
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  className="w-full rounded border border-[#262626] bg-[#0f0f0f] px-3 py-2 text-sm text-[#ededed] focus:border-[#10b981] focus:outline-none focus:ring-1 focus:ring-[#10b981] text-left" 
+                  dir="ltr"
+                  placeholder="07xxxxxxxx"
+                  required={isSignUp}
+                />
+              </div>
+            </>
+          )}
           <div>
             <label className="mb-1 block text-[10px] uppercase tracking-widest text-[#737373]" htmlFor="email">البريد الإلكتروني</label>
             <input 
@@ -124,17 +161,49 @@ export default function LoginPage() {
           </div>
           <div>
             <label className="mb-1 block text-[10px] uppercase tracking-widest text-[#737373]" htmlFor="password">كلمة المرور</label>
-            <input 
-              id="password" 
-              type="password" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded border border-[#262626] bg-[#0f0f0f] px-3 py-2 text-sm text-[#ededed] focus:border-[#10b981] focus:outline-none focus:ring-1 focus:ring-[#10b981] text-left"
-              dir="ltr"
-              placeholder="••••••••"
-              required
-            />
+            <div className="relative">
+              <input 
+                id="password" 
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded border border-[#262626] bg-[#0f0f0f] px-3 py-2 text-sm text-[#ededed] focus:border-[#10b981] focus:outline-none focus:ring-1 focus:ring-[#10b981] text-left"
+                dir="ltr"
+                placeholder="••••••••"
+                required
+              />
+              <button 
+                type="button" 
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-[#737373] hover:text-[#10b981]"
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
           </div>
+          {isSignUp && (
+            <div>
+              <label className="mb-1 block text-[10px] uppercase tracking-widest text-[#737373]">تأكيد كلمة المرور</label>
+              <div className="relative">
+                <input 
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full rounded border border-[#262626] bg-[#0f0f0f] px-3 py-2 text-sm text-[#ededed] focus:border-[#10b981] focus:outline-none focus:ring-1 focus:ring-[#10b981] text-left"
+                  dir="ltr"
+                  placeholder="••••••••"
+                  required={isSignUp}
+                />
+                <button 
+                  type="button" 
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-[#737373] hover:text-[#10b981]"
+                >
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+          )}
           <button
             type="submit"
             disabled={loading}

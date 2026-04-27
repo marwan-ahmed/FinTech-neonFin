@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server';
 import { adminAuth } from '@/lib/firebase-admin';
+import { db } from '@/lib/db';
+import { users, tenants } from '@/schema/schema';
+import { eq } from 'drizzle-orm';
 
 export async function POST(request: Request) {
-  const { idToken } = await request.json();
+  const { idToken, fullName, phoneNumber } = await request.json();
 
   if (!idToken) {
     return NextResponse.json({ error: 'Missing idToken' }, { status: 400 });
@@ -12,7 +15,33 @@ export async function POST(request: Request) {
   const expiresIn = 60 * 60 * 24 * 5 * 1000;
 
   try {
-    // Create the session cookie. This will also verify the ID token.
+    // Verify token to get uid and email
+    const decodedToken = await adminAuth.verifyIdToken(idToken);
+    
+    // Check if user exists in our DB
+    const existingUser = await db.query.users.findFirst({
+      where: eq(users.firebaseUid, decodedToken.uid),
+    });
+
+    if (!existingUser) {
+      // For first time users, create a tenant for them, then create their user profile
+      const newTenant = await db.insert(tenants).values({
+        name: `Organization (${decodedToken.email || decodedToken.uid})`,
+      }).returning();
+      
+      const isSuperAdmin = decodedToken.email === 'reddevil.abualror91@gmail.com'; // Or checking an env var
+
+      await db.insert(users).values({
+        firebaseUid: decodedToken.uid,
+        tenantId: newTenant[0].id,
+        role: isSuperAdmin ? 'superadmin' : 'admin',
+        email: decodedToken.email,
+        fullName: fullName || decodedToken.name || decodedToken.email,
+        phoneNumber: phoneNumber || null,
+      });
+    }
+
+    // Create the session cookie
     const sessionCookie = await adminAuth.createSessionCookie(idToken, { expiresIn });
 
     const options = {
