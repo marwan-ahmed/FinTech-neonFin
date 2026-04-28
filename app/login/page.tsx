@@ -106,9 +106,9 @@ export default function LoginPage() {
               نيون <span className="text-[#10b981]">فين</span>
             </span>
           </div>
-          <h2 className="text-2xl font-mono tracking-tighter text-[#ededed]">تسجيل الدخول</h2>
+          <h2 className="text-2xl font-mono tracking-tighter text-[#ededed]">{isSignUp ? 'إنشاء حساب جديد' : 'تسجيل الدخول'}</h2>
           <p className="mt-2 text-xs uppercase tracking-widest text-[#737373]">
-            {isSignUp ? 'إنشاء حساب جديد' : 'التحقق من الهوية'}
+            {isSignUp ? 'سجل بياناتك للبدء' : 'التحقق من الهوية'}
           </p>
         </div>
 
@@ -167,7 +167,7 @@ export default function LoginPage() {
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded border border-[#262626] bg-[#0f0f0f] px-3 py-2 text-sm text-[#ededed] focus:border-[#10b981] focus:outline-none focus:ring-1 focus:ring-[#10b981] text-left"
+                className="w-full rounded border border-[#262626] bg-[#0f0f0f] px-3 pl-10 py-2 text-sm text-[#ededed] focus:border-[#10b981] focus:outline-none focus:ring-1 focus:ring-[#10b981] text-left"
                 dir="ltr"
                 placeholder="••••••••"
                 required
@@ -189,7 +189,7 @@ export default function LoginPage() {
                   type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full rounded border border-[#262626] bg-[#0f0f0f] px-3 py-2 text-sm text-[#ededed] focus:border-[#10b981] focus:outline-none focus:ring-1 focus:ring-[#10b981] text-left"
+                  className="w-full rounded border border-[#262626] bg-[#0f0f0f] px-3 pl-10 py-2 text-sm text-[#ededed] focus:border-[#10b981] focus:outline-none focus:ring-1 focus:ring-[#10b981] text-left"
                   dir="ltr"
                   placeholder="••••••••"
                   required={isSignUp}
@@ -244,7 +244,7 @@ export default function LoginPage() {
             onClick={() => setIsSignUp(!isSignUp)}
             className="text-[11px] text-[#737373] hover:text-[#10b981] transition-colors uppercase tracking-widest"
           >
-            {isSignUp ? 'تمتلك حساب؟ سجل دخولك' : 'تحتاج إلى وصول؟ اطلب حسابًا'}
+            {isSignUp ? 'تمتلك حساب؟ سجل دخولك' : 'لاتملك حساب؟ انشاء حساب الان'}
           </button>
         </div>
       </div>

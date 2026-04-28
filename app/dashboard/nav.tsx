@@ -15,15 +15,15 @@ export default function DashboardNav() {
   ];
 
   return (
-    <div className="flex gap-6 text-sm font-medium text-[#737373]">
+    <div className="flex gap-6 h-full text-sm font-medium text-[#737373]">
       {links.map((link) => {
         const isActive = pathname === link.href;
         return (
           <Link
             key={link.href}
             href={link.href}
-            className={`mt-5 pb-5 transition-colors hover:text-white ${
-              isActive ? 'border-b border-[#10b981] text-white' : ''
+            className={`flex items-center h-full border-b-2 transition-colors hover:text-white ${
+              isActive ? 'border-[#10b981] text-white' : 'border-transparent'
             }`}
           >
             {link.label}

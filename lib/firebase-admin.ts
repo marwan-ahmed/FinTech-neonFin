@@ -16,9 +16,11 @@ if (!getApps().length) {
       credential: cert(serviceAccount as any),
     });
   } else {
-    console.warn("Firebase Admin credentials not fully configured. Some features may fail.");
-    // Fallback initialize without explicit cert if running on GCP/Firebase env
-    initializeApp();
+    // If we call initializeApp() without credentials in an environment where the metadata server 
+    // isn't accessible for Firebase Admin ADCs, it will hang indefinitely.
+    console.error("FIREBASE ADMIN NOT CONFIGURED: Missing FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL, or PROJECT_ID");
+    // We throw an error so it fails fast instead of hanging.
+    throw new Error("Firebase Admin credentials not configured.");
   }
 }
 

@@ -17,7 +17,7 @@ export default async function DashboardLayout({
     <div className="flex flex-col flex-1 w-full bg-[#0a0a0a]">
       {/* Top Navigation Bar */}
       <nav className="flex h-16 items-center justify-between border-b border-[#262626] bg-[#0f0f0f] px-6">
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-8 h-full">
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 scale-75 transform items-center justify-center rounded-sm bg-[#10b981] rotate-45">
               <div className="h-4 w-4 bg-black rotate-[-45deg]"></div>

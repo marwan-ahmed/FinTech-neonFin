@@ -7,13 +7,22 @@ import Link from 'next/link';
 export default function LoansPage() {
   const [loans, setLoans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
     async function getLoans() {
       try {
-        const res = await fetch('/api/loans');
-        if (res.ok) {
+        const res = await fetch('/api/loans', { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (!active) return;
+        if (!res.ok) {
+           setError('تأكد من ضبط متغيرات البيئة (Firebase Admin) في الإعدادات');
+        } else {
           const data = await res.json();
           setLoans(data.map((l: any) => ({
             ...l,
@@ -24,11 +33,13 @@ export default function LoansPage() {
         }
       } catch (err) {
         console.error("Error fetching loans:", err);
+        setError('حدث خطأ في الاتصال بالخادم. تأكد من الإعدادات.');
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     }
     getLoans();
+    return () => { active = false; };
   }, []);
 
   const filteredLoans = loans.filter(loan => 
@@ -38,6 +49,11 @@ export default function LoansPage() {
 
   return (
     <div className="flex flex-col gap-6 h-full pb-10">
+      {error && (
+        <div className="rounded bg-red-500/10 border border-red-500/50 p-4 text-red-500 text-sm font-bold text-center">
+          {error}
+        </div>
+      )}
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-white tracking-tight">إدارة القروض</h2>

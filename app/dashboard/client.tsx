@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Loader2, Plus, X } from 'lucide-react';
 
 export default function DashboardClient() {
@@ -9,6 +10,7 @@ export default function DashboardClient() {
   const [loans, setLoans] = useState<any[]>([]);
   const [investors, setInvestors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showInvestorModal, setShowInvestorModal] = useState(false);
 
   // Modal states
@@ -25,7 +27,6 @@ export default function DashboardClient() {
       ]);
       if (loansRes.ok) {
          const loansData = await loansRes.json();
-         // Parse decimal strings back to number for client usage
          setLoans(loansData.map((l: any) => ({
            ...l,
            assetValue: parseFloat(l.assetValue || 0),
@@ -47,7 +48,45 @@ export default function DashboardClient() {
   };
 
   useEffect(() => {
-    fetchData();
+    let active = true;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    const load = async () => {
+      try {
+        const [loansRes, investorsRes] = await Promise.all([
+          fetch('/api/loans', { signal: controller.signal }),
+          fetch('/api/investors', { signal: controller.signal })
+        ]);
+        clearTimeout(timeoutId);
+        if (!active) return;
+        if (!loansRes.ok || !investorsRes.ok) {
+          setError('تأكد من ضبط متغيرات البيئة (Firebase Admin) في الإعدادات');
+        }
+        if (loansRes.ok) {
+           const loansData = await loansRes.json();
+           setLoans(loansData.map((l: any) => ({
+             ...l,
+             assetValue: parseFloat(l.assetValue || 0),
+             totalDebt: parseFloat(l.totalDebt || 0)
+           })));
+        }
+        if (investorsRes.ok) {
+           const invData = await investorsRes.json();
+           setInvestors(invData.map((i: any) => ({
+             ...i,
+             capital: parseFloat(i.capital || 0)
+           })));
+        }
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        setError('حدث خطأ في الاتصال بالخادم. تأكد من الإعدادات.');
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    load();
+    return () => { active = false; };
   }, []);
 
   const handleAddInvestor = async (e: React.FormEvent) => {
@@ -91,6 +130,11 @@ export default function DashboardClient() {
 
   return (
     <div className="grid h-full grid-cols-12 gap-6 pb-10 relative">
+      {error && (
+        <div className="col-span-12 rounded bg-red-500/10 border border-red-500/50 p-4 text-red-500 text-sm font-bold text-center">
+          {error}
+        </div>
+      )}
       {/* Modals */}
       {showInvestorModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4">
@@ -154,10 +198,10 @@ export default function DashboardClient() {
         </div>
 
         <div className="mt-auto flex flex-col gap-3 pt-4">
-          <button onClick={() => router.push('/dashboard/loans/apply')} className="flex justify-center items-center gap-2 w-full rounded bg-[#10b981] py-4 text-sm font-bold text-black transition-colors hover:bg-[#34d399]">
+          <Link href="/dashboard/loans/apply" className="flex justify-center items-center gap-2 w-full rounded bg-[#10b981] py-4 text-sm font-bold text-black transition-colors hover:bg-[#34d399]">
             <Plus size={18} />
             تسهيلات ائتمانية جديدة
-          </button>
+          </Link>
           <button onClick={() => setShowInvestorModal(true)} className="flex justify-center items-center gap-2 w-full rounded border border-[#262626] bg-[#1a1a1a] py-4 text-sm font-bold text-white transition-colors hover:bg-[#262626]">
             <Plus size={18} />
             إضافة مستثمر

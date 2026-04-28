@@ -12,18 +12,16 @@ export async function getCurrentUser() {
     if (!sessionCookie) return null;
     
     // Verify session
-    const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie, true);
+    const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie, false);
     
     // Get user from DB
     const dbUser = await db.query.users.findFirst({
-        where: eq(users.firebaseUid, decodedClaims.uid),
-        with: {
-            // we could populate tenant if needed, but tenantId is directly on user record
-        }
+        where: eq(users.firebaseUid, decodedClaims.uid)
     });
 
     return dbUser || null;
   } catch (error) {
+    console.error("getCurrentUser error:", error);
     return null;
   }
 }

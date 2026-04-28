@@ -10,7 +10,7 @@ export async function verifySession() {
   }
 
   try {
-    const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie.value, true);
+    const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie.value, false);
     return decodedClaims;
   } catch (error) {
     console.error('Session verification failed:', error);
