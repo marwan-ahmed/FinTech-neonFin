@@ -1,14 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, ArrowRight, ArrowLeft, CheckCircle, Calculator, User, List } from 'lucide-react';
+import { Loader2, ArrowRight, ArrowLeft, CheckCircle, Calculator, User, List, Printer, Download } from 'lucide-react';
 import Link from 'next/link';
 
 export default function NewLoanWizard() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [errorObj, setErrorObj] = useState<string | null>(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -37,27 +39,24 @@ export default function NewLoanWizard() {
   const totalDebt = cardsCount * saleValue;
   const monthlyInstallment = totalDebt / tenure;
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const generateSchedule = () => {
-    const schedule = [];
+  const schedule = useMemo(() => {
+    const s = [];
     const today = new Date();
     for (let i = 1; i <= tenure; i++) {
-        // Add i months to today's date
         const dueDate = new Date(today.getFullYear(), today.getMonth() + i, today.getDate());
-        schedule.push({
+        s.push({
             installmentNumber: i,
             amount: monthlyInstallment,
             dueDate: dueDate.toISOString(),
             status: 'pending'
         });
     }
-    return schedule;
-  };
-
-  const schedule = generateSchedule();
+    return s;
+  }, [tenure, monthlyInstallment]);
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -86,18 +85,49 @@ export default function NewLoanWizard() {
         body: JSON.stringify(loanData)
       });
       
-      if (!res.ok) throw new Error('Failed to create loan');
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || 'Failed to create loan');
+      }
       
       router.push('/dashboard/loans');
-    } catch (error) {
-      console.error(error);
-      alert('حدث خطأ أثناء الإضافة وحفظ الطلب.');
+      router.refresh();
+    } catch (error: any) {
+      console.error('Error during handleSubmit:', error);
+      setErrorObj(error.message || 'حدث خطأ أثناء الإضافة وحفظ الطلب.');
+    } finally {
       setIsSubmitting(false);
     }
   };
 
   // Allow proceeding to step 2 only if step 1 is filled
-  const canProceedToStep2 = formData.name && formData.phone && formData.address && formData.job;
+  const canProceedToStep2 = formData.name.length > 0 && formData.phone.length > 0 && formData.address.length > 0 && formData.job.length > 0;
+
+  const printSchedule = () => {
+    window.print();
+  };
+
+  const exportScheduleCSV = () => {
+    const headers = ["رقم الدفعة", "تاريخ الاستحقاق", "المبلغ (دينار)", "حالة الدفعة"];
+    const csvContent = [
+      headers.join(","),
+      ...schedule.map(row => [
+        `"#${row.installmentNumber}"`,
+        `"${new Date(row.dueDate).toLocaleDateString('ar-IQ')}"`,
+        Math.round(row.amount),
+        `"قيد الانتظار"`
+      ].join(","))
+    ].join("\n");
+
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `جدول_دفعات_${formData.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
 
   return (
     <div className="flex flex-col gap-6 h-full pb-10 max-w-4xl mx-auto w-full">
@@ -160,6 +190,7 @@ export default function NewLoanWizard() {
             </div>
             <div className="mt-auto pt-8 flex justify-end">
               <button 
+                type="button"
                 onClick={() => setStep(2)} 
                 disabled={!canProceedToStep2}
                 className="flex items-center gap-2 bg-[#10b981] text-black font-bold py-3 px-6 rounded hover:bg-[#34d399] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
@@ -195,6 +226,7 @@ export default function NewLoanWizard() {
                     <option value="5">5 أشهر</option>
                     <option value="6">6 أشهر</option>
                     <option value="12">12 شهر (سنة)</option>
+                    <option value="18">18 شهر</option>
                     <option value="24">24 شهر (سنتين)</option>
                   </select>
                 </div>
@@ -260,12 +292,14 @@ export default function NewLoanWizard() {
 
             <div className="mt-auto pt-6 flex justify-between">
               <button 
+                type="button"
                 onClick={() => setStep(1)} 
                 className="flex items-center gap-2 text-white font-bold py-3 px-6 rounded border border-[#262626] hover:bg-[#262626] transition-colors">
                 <ArrowRight size={18} />
                 الرجوع
               </button>
               <button 
+                type="button"
                 onClick={() => setStep(3)} 
                 disabled={cashNeeded <= 0}
                 className="flex items-center gap-2 bg-[#10b981] text-black font-bold py-3 px-6 rounded hover:bg-[#34d399] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
@@ -280,6 +314,12 @@ export default function NewLoanWizard() {
         {step === 3 && (
           <div className="space-y-6 flex-1 flex flex-col animate-in fade-in slide-in-from-right-4 duration-200">
             <h3 className="text-lg font-bold text-white border-b border-[#262626] pb-3 mb-2">القسم الثالث: جدول الدفعات والمراجعة النهائية</h3>
+            
+            {errorObj && (
+              <div className="rounded border border-red-500/30 bg-red-500/10 p-4 text-red-500 text-sm font-bold w-full text-center">
+                {errorObj}
+              </div>
+            )}
             
             <div className="bg-[#0f0f0f] border border-[#262626] rounded px-4 py-3 flex items-center justify-between">
               <div>
@@ -321,18 +361,38 @@ export default function NewLoanWizard() {
               </table>
             </div>
 
-            <div className="mt-auto pt-4 border-t border-[#262626] flex justify-between">
+            <div className="mt-auto pt-4 border-t border-[#262626] flex justify-between print:hidden">
+              <div className="flex items-center gap-2">
+                <button 
+                  type="button"
+                  onClick={() => setStep(2)} 
+                  className="flex items-center gap-2 text-white font-bold py-3 px-4 sm:px-6 rounded border border-[#262626] hover:bg-[#262626] transition-colors"
+                  disabled={isSubmitting}>
+                  <ArrowRight size={18} />
+                  <span className="hidden sm:inline">تعديل الحسبة</span>
+                </button>
+                <button 
+                  type="button"
+                  onClick={printSchedule} 
+                  className="flex items-center gap-2 text-[#737373] hover:text-white font-bold py-3 px-4 rounded border border-[#262626] bg-[#1a1a1a] hover:bg-[#262626] transition-colors"
+                  title="طباعة الجدول"
+                  disabled={isSubmitting}>
+                  <Printer size={18} />
+                </button>
+                <button 
+                  type="button"
+                  onClick={exportScheduleCSV} 
+                  className="flex items-center gap-2 text-[#737373] hover:text-white font-bold py-3 px-4 rounded border border-[#262626] bg-[#1a1a1a] hover:bg-[#262626] transition-colors"
+                  title="تصدير CSV"
+                  disabled={isSubmitting}>
+                  <Download size={18} />
+                </button>
+              </div>
               <button 
-                onClick={() => setStep(2)} 
-                className="flex items-center gap-2 text-white font-bold py-3 px-6 rounded border border-[#262626] hover:bg-[#262626] transition-colors"
-                disabled={isSubmitting}>
-                <ArrowRight size={18} />
-                تعديل الحسبة
-              </button>
-              <button 
+                type="button"
                 onClick={handleSubmit} 
                 disabled={isSubmitting}
-                className="flex items-center gap-2 bg-[#10b981] text-black font-bold py-3 px-8 rounded hover:bg-[#34d399] transition-colors disabled:opacity-50">
+                className="flex items-center gap-2 bg-[#10b981] text-black font-bold py-3 px-4 sm:px-8 rounded hover:bg-[#34d399] transition-colors disabled:opacity-50">
                 {isSubmitting ? (
                   <>
                     <Loader2 className="animate-spin" size={18} />
