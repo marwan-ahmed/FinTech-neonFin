@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { adminAuth } from '@/lib/firebase-admin';
 import { db } from '@/lib/db';
-import { users } from '@/schema/schema';
+import { users, tenants } from '@/schema/schema';
 import { eq } from 'drizzle-orm';
 
 export async function getCurrentUser() {
@@ -15,9 +15,29 @@ export async function getCurrentUser() {
     const decodedClaims = await adminAuth.verifySessionCookie(sessionCookie, false);
     
     // Get user from DB
-    const dbUser = await db.query.users.findFirst({
+    let dbUser = await db.query.users.findFirst({
         where: eq(users.firebaseUid, decodedClaims.uid)
     });
+
+    if (!dbUser && decodedClaims.uid) {
+        // Auto-create user if they are logged in via Firebase but not in the new Neon DB.
+        console.log("User missing in DB, recreating...");
+        const newTenant = await db.insert(tenants).values({
+            name: `Organization (${decodedClaims.email || decodedClaims.uid})`,
+        }).returning();
+        
+        const isSuperAdmin = decodedClaims.email === 'reddevil.abualror91@gmail.com'; 
+
+        const newUsers = await db.insert(users).values({
+            firebaseUid: decodedClaims.uid,
+            tenantId: newTenant[0].id,
+            role: isSuperAdmin ? 'superadmin' : 'admin',
+            email: decodedClaims.email,
+            fullName: decodedClaims.name || decodedClaims.email || 'Admin',
+            phoneNumber: null,
+        }).returning();
+        dbUser = newUsers[0];
+    }
 
     return dbUser || null;
   } catch (error) {

@@ -2,6 +2,8 @@ import { getCurrentUser } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import AccountForm from './AccountForm';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AccountPage() {
   const user = await getCurrentUser();
 

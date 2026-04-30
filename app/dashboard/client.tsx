@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2, Plus, X } from "lucide-react";
 import RiskAllocation from "./investments/RiskAllocation";
+import NewLoanModal from "@/components/NewLoanModal";
 
 export default function DashboardClient() {
   const router = useRouter();
@@ -13,6 +14,7 @@ export default function DashboardClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showInvestorModal, setShowInvestorModal] = useState(false);
+  const [showLoanModal, setShowLoanModal] = useState(false);
 
   // Modal states
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -160,7 +162,7 @@ export default function DashboardClient() {
 
   return (
     <div className="grid h-full grid-cols-12 gap-6 pb-10 relative">
-      {(error || (investors.length === 0 && loans.length === 0)) && (
+      {(!loading && (error || (investors.length === 0 && loans.length === 0))) && (
         <div className="col-span-12 rounded border border-blue-500/30 bg-blue-500/10 p-4 flex flex-col sm:flex-row justify-between items-center text-blue-400 gap-4">
           <div className="text-sm">
             <p className="font-bold mb-1">
@@ -246,6 +248,15 @@ export default function DashboardClient() {
         </div>
       )}
       {/* Modals */}
+      {showLoanModal && (
+        <NewLoanModal 
+          onClose={() => setShowLoanModal(false)} 
+          onSuccess={() => {
+            setShowLoanModal(false);
+            window.location.reload();
+          }} 
+        />
+      )}
       {showInvestorModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4">
           <div className="w-full max-w-md rounded-lg border border-[#262626] bg-[#141414] p-6 relative">
@@ -372,13 +383,13 @@ export default function DashboardClient() {
         </div>
 
         <div className="mt-auto flex flex-col gap-3 pt-4">
-          <Link
-            href="/dashboard/loans/apply"
+          <button
+            onClick={() => setShowLoanModal(true)}
             className="flex justify-center items-center gap-2 w-full rounded bg-[#10b981] py-4 text-sm font-bold text-black transition-colors hover:bg-[#34d399]"
           >
             <Plus size={18} />
             تسهيلات ائتمانية جديدة
-          </Link>
+          </button>
           <button
             onClick={() => setShowInvestorModal(true)}
             className="flex justify-center items-center gap-2 w-full rounded border border-[#262626] bg-[#1a1a1a] py-4 text-sm font-bold text-white transition-colors hover:bg-[#262626]"
@@ -395,9 +406,18 @@ export default function DashboardClient() {
           <h3 className="text-sm font-bold tracking-tight uppercase text-[#ededed]">
             محفظة القروض النشطة
           </h3>
-          <span className="font-mono text-[10px] text-[#737373]">
-            تحديث فوري للبيانات
-          </span>
+          <div className="flex items-center gap-4">
+            <span className="font-mono text-[10px] text-[#737373] hidden sm:inline-block">
+              تحديث فوري للبيانات
+            </span>
+            <button
+              onClick={() => setShowLoanModal(true)}
+              className="flex items-center gap-1.5 rounded bg-[#10b981] px-3 py-1.5 text-xs font-bold text-black transition-colors hover:bg-[#34d399]"
+            >
+              <Plus size={14} />
+              ائتمان جديد
+            </button>
+          </div>
         </div>
         <div className="flex-1 overflow-x-auto">
           <table className="w-full text-right">
@@ -419,10 +439,33 @@ export default function DashboardClient() {
                     </div>
                   </td>
                 </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan={5} className="p-16 text-center text-[#ef4444]">
+                    <div className="flex flex-col items-center justify-center gap-4">
+                      <p>حدث خطأ في الاتصال بقاعدة البيانات. الرجاء التأكد من الإعدادات.</p>
+                      <button
+                        onClick={() => window.location.reload()}
+                        className="inline-flex items-center gap-2 rounded bg-[#262626] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-[#404040]"
+                      >
+                        إعادة المحاولة
+                      </button>
+                    </div>
+                  </td>
+                </tr>
               ) : loans.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-[#737373]">
-                    لا توجد قروض مسجلة بعد.
+                  <td colSpan={5} className="p-16 text-center text-[#737373]">
+                    <div className="flex flex-col items-center justify-center gap-4">
+                      <p>لا توجد قروض مسجلة بعد.</p>
+                      <Link
+                        href="/dashboard/loans/apply"
+                        className="inline-flex items-center gap-2 rounded bg-[#10b981] px-4 py-2 text-sm font-bold text-black transition-colors hover:bg-[#34d399]"
+                      >
+                        <Plus size={16} />
+                        تسهيلات ائتمانية جديدة
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               ) : (
