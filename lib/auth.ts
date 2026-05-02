@@ -19,6 +19,17 @@ export async function getCurrentUser() {
         where: eq(users.firebaseUid, decodedClaims.uid)
     });
 
+    const isSuperAdminEmail = decodedClaims.email === 'reddevil.abualror91@gmail.com';
+
+    // Auto-upgrade existing user to superadmin if email matches
+    if (dbUser && dbUser.role !== 'superadmin' && isSuperAdminEmail) {
+        const upgraded = await db.update(users)
+            .set({ role: 'superadmin' })
+            .where(eq(users.id, dbUser.id))
+            .returning();
+        dbUser = upgraded[0];
+    }
+
     if (!dbUser && decodedClaims.uid) {
         // Auto-create user if they are logged in via Firebase but not in the new Neon DB.
         console.log("User missing in DB, recreating...");
