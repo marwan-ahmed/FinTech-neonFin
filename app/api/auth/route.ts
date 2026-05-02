@@ -49,8 +49,8 @@ export async function POST(request: Request) {
       value: sessionCookie,
       maxAge: expiresIn,
       httpOnly: true,
-      secure: true,
-      sameSite: 'none' as const,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax' as const,
       path: '/',
     };
 

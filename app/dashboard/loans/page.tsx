@@ -16,7 +16,7 @@ export default function LoansPage() {
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const timeoutId = setTimeout(() => controller.abort(new Error("Request timeout")), 30000); // 30 seconds timeout to prevent false positives
 
     async function getLoans() {
       try {
@@ -27,14 +27,33 @@ export default function LoansPage() {
            setError('تأكد من ضبط متغيرات البيئة (Firebase Admin) في الإعدادات');
         } else {
           const data = await res.json();
-          setLoans(data.map((l: any) => ({
-            ...l,
-            borrowerId: l.borrowerName, // map for display
-            assetValue: parseFloat(l.assetValue || 0),
-            totalDebt: parseFloat(l.totalDebt || 0)
-          })));
+          setLoans(data.map((l: any) => {
+            const assetValue = parseFloat(l.assetValue || 0);
+            const totalDebt = parseFloat(l.totalDebt || 0);
+            
+            // Calculate paid amount from schedule
+            const schedule = l.schedule || [];
+            const paidAmount = schedule
+              .filter((s: any) => s.status === 'paid')
+              .reduce((sum: number, s: any) => sum + (parseFloat(s.amount) || 0), 0);
+            
+            const remainingAmount = totalDebt - paidAmount;
+
+            return {
+              ...l,
+              borrowerId: l.borrowerName, // map for display
+              assetValue,
+              totalDebt,
+              paidAmount,
+              remainingAmount
+            }
+          }));
         }
-      } catch (err) {
+      } catch (err: any) {
+        if (err.name === "AbortError" || err.message === "Request timeout") {
+           setError("انتهى وقت الاتصال بالخادم، يرجى المحاولة مرة أخرى.");
+           return;
+        }
         console.error("Error fetching loans:", err);
         setError('حدث خطأ في الاتصال بالخادم. تأكد من الإعدادات.');
       } finally {
@@ -90,9 +109,10 @@ export default function LoansPage() {
             <thead className="sticky top-0 border-b border-[#262626] bg-[#0f0f0f] text-[10px] uppercase tracking-wider text-[#737373] z-10">
               <tr>
                 <th className="p-4 font-normal">المستفيد</th>
-                <th className="p-4 font-normal">قيمة التسهيل</th>
-                <th className="p-4 font-normal">المدة</th>
-                <th className="p-4 font-normal">الاستحقاق</th>
+                <th className="p-4 font-normal">إجمالي الدين</th>
+                <th className="p-4 font-normal">المسدد</th>
+                <th className="p-4 font-normal">المتبقي</th>
+                <th className="p-4 font-normal">الاستحقاق القادم</th>
                 <th className="p-4 font-normal">الحالة</th>
                 <th className="p-4 font-normal">إجراء</th>
               </tr>
@@ -100,7 +120,7 @@ export default function LoansPage() {
             <tbody className="font-mono text-sm">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-[#737373]">
+                  <td colSpan={7} className="p-8 text-center text-[#737373]">
                     <div className="flex justify-center items-center h-full">
                       <Loader2 className="animate-spin text-[#10b981]" />
                     </div>
@@ -108,19 +128,20 @@ export default function LoansPage() {
                 </tr>
               ) : filteredLoans.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-[#737373]">لا توجد نتائج مطابقة.</td>
+                  <td colSpan={7} className="p-8 text-center text-[#737373]">لا توجد نتائج مطابقة.</td>
                 </tr>
               ) : (
                 filteredLoans.map((loan) => (
                   <tr key={loan.id} className="border-b border-[#262626] transition-colors hover:bg-[#1a1a1a]">
                     <td className="p-4 text-white font-sans">
-                      <Link href={`/dashboard/loans/${loan.id}`} className="hover:text-[#10b981] transition-colors hover:underline">
+                      <Link href={`/dashboard/loans/${loan.id}`} className="hover:text-[#10b981] transition-colors hover:underline font-bold">
                         {loan.borrowerId || 'غير محدد'}
                       </Link>
                     </td>
-                    <td className="p-4 text-[#ededed]" dir="ltr">{(loan.assetValue || 0).toLocaleString()} د.ع</td>
-                    <td className="p-4 text-[#737373]">{loan.tenure} شهر</td>
-                    <td className="p-4 text-[#ededed]">{new Date(loan.nextDue).toLocaleDateString('ar-IQ')}</td>
+                    <td className="p-4 text-[#ededed]" dir="ltr">{(loan.totalDebt || 0).toLocaleString()} د.ع</td>
+                    <td className="p-4 text-[#10b981]" dir="ltr">{(loan.paidAmount || 0).toLocaleString()} د.ع</td>
+                    <td className="p-4 text-[#f59e0b]" dir="ltr">{(loan.remainingAmount || 0).toLocaleString()} د.ع</td>
+                    <td className="p-4 text-[#ededed]">{loan.nextDue ? new Date(loan.nextDue).toLocaleDateString('ar-IQ') : 'لا يوجد'}</td>
                     <td className="p-4">
                       {loan.status === 'active' ? (
                         <span className="inline-flex items-center rounded-full bg-[#10b981]/10 px-2 py-1 text-xs font-medium text-[#10b981] ring-1 ring-inset ring-[#10b981]/20">

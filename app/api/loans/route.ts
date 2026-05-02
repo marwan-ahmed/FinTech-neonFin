@@ -3,6 +3,23 @@ import { db } from '@/lib/db';
 import { loans } from '@/schema/schema';
 import { desc, eq } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth';
+import { z } from 'zod';
+
+const loanSchema = z.object({
+  borrowerName: z.string().min(2, "Name must be at least 2 characters").max(100),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+  job: z.string().optional(),
+  assetValue: z.number().or(z.string()).transform((val) => Number(val)).refine((val) => !isNaN(val) && val >= 0, "Asset value must be a positive number"),
+  totalDebt: z.number().or(z.string()).transform((val) => Number(val)).refine((val) => !isNaN(val) && val >= 0, "Total debt must be a positive number"),
+  tenure: z.number().int().positive("Tenure must be a positive integer"),
+  marketCardValue: z.number().or(z.string()).optional().transform((val) => val ? Number(val) : undefined),
+  saleCardValue: z.number().or(z.string()).optional().transform((val) => val ? Number(val) : undefined),
+  score: z.string().optional().default('A'),
+  status: z.enum(['pending', 'approved', 'active', 'completed', 'defaulted']).optional().default('active'),
+  schedule: z.array(z.any()).optional().default([]), // More specific shape can be implemented later
+  nextDue: z.string().or(z.date()).optional().transform((val) => val ? new Date(val) : null),
+});
 
 export async function GET() {
   try {
@@ -29,22 +46,31 @@ export async function POST(req: Request) {
     const user = await getCurrentUser();
     if (!user || !user.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const data = await req.json();
+    const rawData = await req.json();
+    
+    // Validate input using Zod
+    const validationResult = loanSchema.safeParse(rawData);
+    if (!validationResult.success) {
+      return NextResponse.json({ error: 'Validations failed', details: validationResult.error.format() }, { status: 400 });
+    }
+    
+    const data = validationResult.data;
+
     const result = await db.insert(loans).values({
       tenantId: user.tenantId,
       borrowerName: data.borrowerName,
-      phone: data.phone,
-      address: data.address,
-      job: data.job,
+      phone: data.phone || null,
+      address: data.address || null,
+      job: data.job || null,
       assetValue: data.assetValue.toString(),
       totalDebt: data.totalDebt.toString(),
       tenure: data.tenure,
-      marketCardValue: data.marketCardValue?.toString(),
-      saleCardValue: data.saleCardValue?.toString(),
-      score: data.score || 'A',
-      status: data.status || 'active',
-      schedule: data.schedule || [],
-      nextDue: data.nextDue ? new Date(data.nextDue) : null,
+      marketCardValue: data.marketCardValue?.toString() || null,
+      saleCardValue: data.saleCardValue?.toString() || null,
+      score: data.score,
+      status: data.status,
+      schedule: data.schedule,
+      nextDue: data.nextDue,
       createdAt: new Date(),
       updatedAt: new Date()
     }).returning();

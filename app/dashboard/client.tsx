@@ -63,7 +63,7 @@ export default function DashboardClient() {
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const timeoutId = setTimeout(() => controller.abort(new Error("Request timeout")), 8000);
 
     const load = async () => {
       try {
@@ -95,7 +95,11 @@ export default function DashboardClient() {
             })),
           );
         }
-      } catch (err) {
+      } catch (err: any) {
+        if (err.name === "AbortError" || err.message === "Request timeout") {
+           setError("انتهى وقت الاتصال بالخادم، يرجى المحاولة مرة أخرى.");
+           return;
+        }
         console.error("Error fetching data:", err);
         setError("حدث خطأ في الاتصال بالخادم. تأكد من الإعدادات.");
       } finally {
@@ -146,6 +150,16 @@ export default function DashboardClient() {
     (acc, loan) => acc + (loan.assetValue || 0),
     0,
   );
+
+  const totalDebt = loans.reduce((acc, loan) => acc + (loan.totalDebt || 0), 0);
+  const totalPaid = loans.reduce((acc, loan) => {
+    if (!loan.schedule || !Array.isArray(loan.schedule)) return acc;
+    const paidInLoan = loan.schedule
+      .filter((s: any) => s.status === "paid")
+      .reduce((sum: number, s: any) => sum + (parseFloat(s.amount) || 0), 0);
+    return acc + paidInLoan;
+  }, 0);
+  const outstandingDebt = totalDebt > 0 ? totalDebt - totalPaid : 0;
 
   const institutionalCapital = investors
     .filter((i) => i.type === "institutional")
@@ -260,7 +274,7 @@ export default function DashboardClient() {
 
         <div className="flex flex-col gap-1 rounded-lg border border-[#262626] bg-[#141414] p-5">
           <span className="text-[10px] uppercase tracking-[0.2em] text-[#737373]">
-            المدفوعات النشطة
+            المدفوعات النشطة (رأس المال كقروض)
           </span>
           <h2
             className="font-mono text-3xl tracking-tighter text-[#ededed]"
@@ -283,6 +297,57 @@ export default function DashboardClient() {
               : 0}
             %
           </span>
+        </div>
+
+        <div className="flex flex-col gap-1 rounded-lg border border-[#262626] bg-[#141414] p-5">
+          <span className="text-[10px] uppercase tracking-[0.2em] text-[#737373]">
+            إجمالي الديون (المطلوبة للتسديد)
+          </span>
+          <h2
+            className="font-mono text-2xl tracking-tighter text-[#ededed]"
+            dir="ltr"
+          >
+            {totalDebt.toLocaleString("en-US")} د.ع
+          </h2>
+        </div>
+
+        <div className="flex flex-col gap-1 rounded-lg border border-[#262626] bg-[#141414] p-5">
+          <span className="text-[10px] uppercase tracking-[0.2em] text-[#737373]">
+            إجمالي المبالغ المسددة
+          </span>
+          <h2
+            className="font-mono text-2xl tracking-tighter text-[#10b981]"
+            dir="ltr"
+          >
+            {totalPaid.toLocaleString("en-US")} د.ع
+          </h2>
+          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[#262626]">
+            <div
+              className="h-full bg-[#10b981]"
+              style={{
+                width: `${totalDebt > 0 ? Math.min(100, (totalPaid / totalDebt) * 100) : 0}%`,
+              }}
+            ></div>
+          </div>
+          <span className="mt-1 text-[10px] text-[#737373]">
+            نسبة التسديد الكلية:{" "}
+            {totalDebt > 0
+              ? Math.round((totalPaid / totalDebt) * 100)
+              : 0}
+            %
+          </span>
+        </div>
+
+        <div className="flex flex-col gap-1 rounded-lg border border-[#262626] bg-[#141414] p-5">
+          <span className="text-[10px] uppercase tracking-[0.2em] text-[#737373]">
+            المبالغ المتبقية غير المسددة
+          </span>
+          <h2
+            className="font-mono text-2xl tracking-tighter text-[#f59e0b]"
+            dir="ltr"
+          >
+            {outstandingDebt.toLocaleString("en-US")} د.ع
+          </h2>
         </div>
 
         <div className="flex flex-col gap-1 rounded-lg border border-[#262626] bg-[#141414] p-5">
@@ -387,10 +452,11 @@ export default function DashboardClient() {
                 loans.map((loan) => (
                   <tr
                     key={loan.id}
+                    onClick={() => router.push(`/dashboard/loans/${loan.id}`)}
                     className="cursor-pointer border-b border-[#262626] transition-colors hover:bg-[#1a1a1a]"
                   >
                     <td className="p-4 text-white font-sans">
-                      {loan.borrowerId}
+                      {loan.borrowerName || loan.borrowerId || 'غير معروف'}
                     </td>
                     <td className="p-4 text-[#ededed]" dir="ltr">
                       {(loan.assetValue || 0).toLocaleString()} د.ع
