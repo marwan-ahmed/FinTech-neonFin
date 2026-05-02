@@ -4,11 +4,14 @@ import { useState, useEffect } from 'react';
 import { Loader2, Search, Filter, Plus } from 'lucide-react';
 import Link from 'next/link';
 
+import NewLoanModal from "@/components/NewLoanModal";
+
 export default function LoansPage() {
   const [loans, setLoans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showLoanModal, setShowLoanModal] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -59,10 +62,10 @@ export default function LoansPage() {
           <h2 className="text-2xl font-bold text-white tracking-tight">إدارة القروض</h2>
           <p className="text-sm text-[#737373] mt-1">تتبع وإدارة وسداد التسهيلات الائتمانية النشطة.</p>
         </div>
-        <Link href="/dashboard/loans/apply" className="flex items-center gap-2 bg-[#10b981] text-black text-sm font-bold px-4 py-2 rounded hover:bg-[#34d399] transition-colors">
+        <button onClick={() => setShowLoanModal(true)} className="flex items-center gap-2 bg-[#10b981] text-black text-sm font-bold px-4 py-2 rounded hover:bg-[#34d399] transition-colors">
           <Plus size={16} />
           إضافة قرض جديد
-        </Link>
+        </button>
       </div>
 
       <div className="flex flex-1 flex-col overflow-hidden rounded-lg border border-[#262626] bg-[#141414]">
@@ -139,6 +142,17 @@ export default function LoansPage() {
           </table>
         </div>
       </div>
+      
+      {/* Modals */}
+      {showLoanModal && (
+        <NewLoanModal 
+          onClose={() => setShowLoanModal(false)} 
+          onSuccess={() => {
+            setShowLoanModal(false);
+            window.location.reload();
+          }} 
+        />
+      )}
     </div>
   );
 }

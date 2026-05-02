@@ -12,6 +12,7 @@ export default function LoanDetailsPage({ params }: { params: Promise<{ id: stri
   
   const [loan, setLoan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchLoan() {
@@ -25,11 +26,12 @@ export default function LoanDetailsPage({ params }: { params: Promise<{ id: stri
           data.marketCardValue = parseFloat(data.marketCardValue || 0);
           data.saleCardValue = parseFloat(data.saleCardValue || 0);
           setLoan(data);
+          setError(null);
         } else {
-           console.error("Failed to fetch loan");
+           setError("Failed to fetch loan");
         }
       } catch (err) {
-        console.error(err);
+        setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
         setLoading(false);
       }
@@ -70,10 +72,10 @@ export default function LoanDetailsPage({ params }: { params: Promise<{ id: stri
     );
   }
 
-  if (!loan) {
+  if (error || !loan) {
     return (
       <div className="flex flex-col h-full items-center justify-center gap-4 text-[#737373]">
-        <p>لم يتم العثور على القرض</p>
+        <p>{error || 'لم يتم العثور على القرض'}</p>
         <Link href="/dashboard/loans" className="text-[#10b981] hover:underline">العودة لإدارة القروض</Link>
       </div>
     );

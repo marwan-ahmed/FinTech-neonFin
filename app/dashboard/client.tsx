@@ -162,91 +162,6 @@ export default function DashboardClient() {
 
   return (
     <div className="grid h-full grid-cols-12 gap-6 pb-10 relative">
-      {(!loading && (error || (investors.length === 0 && loans.length === 0))) && (
-        <div className="col-span-12 rounded border border-blue-500/30 bg-blue-500/10 p-4 flex flex-col sm:flex-row justify-between items-center text-blue-400 gap-4">
-          <div className="text-sm">
-            <p className="font-bold mb-1">
-              تنبيه النظام: لا توجد بيانات مسجلة أو لم يتم إعداد قاعدة البيانات
-              بعد.
-            </p>
-            <p className="text-xs text-blue-400/80">
-              انقر على الزر لتوليد بيانات تجريبية لرؤية المخططات والتحليلات تعمل
-              فوراً عبر جميع صفحات النظام.
-            </p>
-          </div>
-          <button
-            onClick={() => {
-              setInvestors([
-                {
-                  id: "1",
-                  name: "شركة أفق للتجارة",
-                  type: "institutional",
-                  capital: 50000000,
-                  createdAt: new Date(Date.now() - 30 * 86400000),
-                },
-                {
-                  id: "2",
-                  name: "أحمد محمود",
-                  type: "retail",
-                  capital: 15000000,
-                  createdAt: new Date(Date.now() - 15 * 86400000),
-                },
-                {
-                  id: "3",
-                  name: "مؤسسة الرواد",
-                  type: "institutional",
-                  capital: 120000000,
-                  createdAt: new Date(Date.now() - 60 * 86400000),
-                },
-                {
-                  id: "4",
-                  name: "سالم عبدالله",
-                  type: "retail",
-                  capital: 5000000,
-                  createdAt: new Date(),
-                },
-              ]);
-              setLoans([
-                {
-                  id: "l1",
-                  borrowerId: "سالم عبدالله (مقترض)",
-                  totalDebt: 45000000,
-                  assetValue: 45000000,
-                  status: "active",
-                  score: "A",
-                  tenure: 12,
-                  nextDue: new Date(Date.now() + 5 * 86400000),
-                },
-                {
-                  id: "l2",
-                  borrowerId: "مؤسسة الرواد (تمويل قصير)",
-                  totalDebt: 25000000,
-                  assetValue: 25000000,
-                  status: "defaulted",
-                  score: "C",
-                  tenure: 6,
-                  nextDue: new Date(Date.now() - 10 * 86400000),
-                },
-                {
-                  id: "l3",
-                  borrowerId: "أحمد محمود (تمويل سيارة)",
-                  totalDebt: 10000000,
-                  assetValue: 10000000,
-                  status: "active",
-                  score: "B",
-                  tenure: 24,
-                  nextDue: new Date(Date.now() + 2 * 86400000),
-                },
-              ]);
-              setError(null);
-              setLoading(false);
-            }}
-            className="whitespace-nowrap px-4 py-2 bg-blue-500 text-black font-bold rounded text-sm hover:bg-blue-400 transition-colors"
-          >
-            توليد بيانات تجريبية (Demo)
-          </button>
-        </div>
-      )}
       {/* Modals */}
       {showLoanModal && (
         <NewLoanModal 
@@ -458,13 +373,13 @@ export default function DashboardClient() {
                   <td colSpan={5} className="p-16 text-center text-[#737373]">
                     <div className="flex flex-col items-center justify-center gap-4">
                       <p>لا توجد قروض مسجلة بعد.</p>
-                      <Link
-                        href="/dashboard/loans/apply"
-                        className="inline-flex items-center gap-2 rounded bg-[#10b981] px-4 py-2 text-sm font-bold text-black transition-colors hover:bg-[#34d399]"
+                      <button
+                        onClick={() => setShowLoanModal(true)}
+                        className="inline-flex flex-row items-center gap-2 rounded bg-[#10b981] px-4 py-2 text-sm font-bold text-black transition-colors hover:bg-[#34d399]"
                       >
                         <Plus size={16} />
                         تسهيلات ائتمانية جديدة
-                      </Link>
+                      </button>
                     </div>
                   </td>
                 </tr>

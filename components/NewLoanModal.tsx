@@ -1,13 +1,33 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, ArrowRight, ArrowLeft, CheckCircle, Calculator, User, List, Printer, Download, X } from 'lucide-react';
+import { Loader2, ArrowRight, ArrowLeft, CheckCircle, Calculator, User, List, Printer, Download, X, AlertTriangle } from 'lucide-react';
 
 export default function NewLoanModal({ onClose, onSuccess }: { onClose: () => void, onSuccess: () => void }) {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [existingBorrowers, setExistingBorrowers] = useState<string[]>([]);
+  const [nameWarning, setNameWarning] = useState<string | null>(null);
 
   const [errorObj, setErrorObj] = useState<string | null>(null);
+
+  // Fetch existing borrowers when modal opens
+  useEffect(() => {
+    async function fetchLoans() {
+      try {
+        const res = await fetch('/api/loans');
+        if (res.ok) {
+          const data = await res.json();
+          // Extract existing borrower names
+          const names = data.map((l: any) => l.borrowerName?.trim().toLowerCase()).filter(Boolean);
+          setExistingBorrowers(names);
+        }
+      } catch (err) {
+        console.error("Failed to fetch existing loans", err);
+      }
+    }
+    fetchLoans();
+  }, []);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -37,7 +57,17 @@ export default function NewLoanModal({ onClose, onSuccess }: { onClose: () => vo
   const monthlyInstallment = totalDebt / tenure;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+
+    if (name === 'name') {
+      const typedName = value.trim().toLowerCase();
+      if (typedName && existingBorrowers.includes(typedName)) {
+        setNameWarning("يوجد اسم مشابه تمامًا مسجل في النظام مسبقاً.");
+      } else {
+        setNameWarning(null);
+      }
+    }
   };
 
   const schedule = useMemo(() => {
@@ -168,9 +198,15 @@ export default function NewLoanModal({ onClose, onSuccess }: { onClose: () => vo
             {step === 1 && (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
+                  <div className="col-span-1 sm:col-span-2">
                     <label className="text-xs text-[#737373] uppercase mb-1.5 block tracking-wider">الاسم الرباعي واللقب</label>
                     <input required name="name" value={formData.name} onChange={handleInputChange} className="w-full bg-[#0f0f0f] border border-[#262626] rounded px-4 py-3 text-white focus:border-[#10b981] outline-none transition-colors" placeholder="مثال: أحمد محمد علي عبدالله" />
+                    {nameWarning && (
+                      <p className="mt-2 text-xs text-[#f59e0b] flex items-center gap-1 font-bold">
+                        <AlertTriangle size={14} />
+                        {nameWarning}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="text-xs text-[#737373] uppercase mb-1.5 block tracking-wider">رقم الهاتف</label>
