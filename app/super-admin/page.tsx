@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { tenants, users, loans, investors } from "@/schema/schema";
 import { count, sum } from "drizzle-orm";
-import { Server, Users, Wallet, CreditCard, Activity, Search, ShieldCheck } from "lucide-react";
+import { Server, Users, Wallet, CreditCard, Activity, Search, ShieldCheck, Building2 } from "lucide-react";
 
 export default async function SuperAdminPage() {
   const user = await getCurrentUser();

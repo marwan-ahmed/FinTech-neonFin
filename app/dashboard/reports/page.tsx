@@ -191,7 +191,7 @@ export default function ReportsPage() {
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#141414', borderColor: '#262626', color: '#fff' }}
                   itemStyle={{ color: '#ededed' }}
-                  formatter={(val: number) => [`${val.toLocaleString()} د.ع`, '']}
+                  formatter={(val: any) => [`${Number(val).toLocaleString()} د.ع`, '']}
                 />
                 <Legend />
                 <Line type="monotone" name="المستحق" dataKey="expected" stroke="#737373" strokeWidth={2} dot={false} />
