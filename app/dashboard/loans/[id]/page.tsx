@@ -367,7 +367,7 @@ export default function LoanDetailsPage({ params }: { params: Promise<{ id: stri
                       <td className="p-4 text-white print:text-black">#{installment.installmentNumber}</td>
                       <td className={`p-4 ${isLate ? 'text-[#ef4444]' : 'text-[#ededed]'} print:text-black flex items-center gap-2`}>
                         {new Date(installment.dueDate).toLocaleDateString('ar-IQ')}
-                        {isLate && <AlertTriangle size={14} className="text-[#ef4444] print:hidden" title="متأخر عن السداد" />}
+                        {isLate && <span title="متأخر عن السداد"><AlertTriangle size={14} className="text-[#ef4444] print:hidden" /></span>}
                       </td>
                       <td className="p-4 text-[#ededed] print:text-black" dir="ltr">{Math.round(amount).toLocaleString()}</td>
                       <td className="p-4 text-[#10b981] print:text-black" dir="ltr">{Math.round(paidAmount).toLocaleString()}</td>
