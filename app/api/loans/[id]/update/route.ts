@@ -16,7 +16,7 @@ const updateSchema = z.object({
   return true;
 }, "installmentNumber is required when action is pay_installment");
 
-export async function PATCH(req: Request, context: { params: Promise<{ id: string, scheduleId: string }> }) {
+export async function PATCH(req: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
   try {
     const user = await getCurrentUser();
