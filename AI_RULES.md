@@ -31,7 +31,7 @@ STACK:
 
 ARCHITECTURE_PATTERN: "Multi-tenant SaaS"
 CURRENT_PHASE: "MVP / Beta"
-ACTIVE_MODULE: "Security & Dashboard Core"
+ACTIVE_MODULE: ""
 ```
 
 ### قواعد هوية المشروع:
