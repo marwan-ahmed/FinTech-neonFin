@@ -29,7 +29,7 @@ export async function POST(request: Request) {
         name: `Organization (${decodedToken.email || decodedToken.uid})`,
       }).returning();
       
-      const isSuperAdmin = decodedToken.email === 'reddevil.abualror91@gmail.com'; // Or checking an env var
+      const isSuperAdmin = decodedToken.email === process.env.SUPERADMIN_EMAIL;
 
       await db.insert(users).values({
         firebaseUid: decodedToken.uid,

@@ -11,8 +11,12 @@ const investorSchema = z.object({
   type: z.enum(['retail', 'institutional']).optional().default('retail'),
 });
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const { searchParams } = new URL(req.url);
+    const limit = parseInt(searchParams.get('limit') || '50');
+    const offset = parseInt(searchParams.get('offset') || '0');
+
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -23,7 +27,7 @@ export async function GET() {
        query = query.where(eq(investors.tenantId, user.tenantId!)) as any;
     }
 
-    const allInvestors = await query.orderBy(desc(investors.createdAt));
+    const allInvestors = await query.orderBy(desc(investors.createdAt)).limit(limit).offset(offset);
     return NextResponse.json(allInvestors);
   } catch (error) {
     console.error(error);

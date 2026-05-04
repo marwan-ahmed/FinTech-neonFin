@@ -50,10 +50,10 @@ export const loans = pgTable('loans', {
   score: text('score').default('A').notNull(),
   status: loanStatusEnum('status').default('active').notNull(),
   
-  schedule: jsonb('schedule').default([]).notNull(),
   nextDue: timestamp('next_due'),
   
   createdAt: timestamp('created_at').defaultNow().notNull(),
+
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
@@ -67,3 +67,30 @@ export const kycApplications = pgTable('kyc_applications', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+
+export const loanScheduleEnum = pgEnum('schedule_status', ['pending', 'paid', 'late', 'defaulted']);
+
+export const loanSchedules = pgTable('loan_schedules', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').references(() => tenants.id).notNull(),
+  loanId: uuid('loan_id').references(() => loans.id).notNull(),
+  installmentNumber: integer('installment_number').notNull(),
+  dueDate: timestamp('due_date').notNull(),
+  amount: decimal('amount', { precision: 12, scale: 2 }).notNull(),
+  paidAmount: decimal('paid_amount', { precision: 12, scale: 2 }).default('0'),
+  status: loanScheduleEnum('status').default('pending').notNull(),
+  paidAt: timestamp('paid_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const auditLogs = pgTable('audit_logs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').references(() => tenants.id).notNull(),
+  userId: uuid('user_id'), // Optional in case of system actions, but mostly referencing users.id
+  action: text('action').notNull(), 
+  entityType: text('entity_type').notNull(), 
+  entityId: text('entity_id').notNull(),
+  details: jsonb('details'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});

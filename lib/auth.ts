@@ -19,7 +19,7 @@ export async function getCurrentUser() {
         where: eq(users.firebaseUid, decodedClaims.uid)
     });
 
-    const isSuperAdminEmail = decodedClaims.email === 'reddevil.abualror91@gmail.com';
+    const isSuperAdminEmail = decodedClaims.email === process.env.SUPERADMIN_EMAIL;
 
     // Auto-upgrade existing user to superadmin if email matches
     if (dbUser && dbUser.role !== 'superadmin' && isSuperAdminEmail) {
@@ -37,7 +37,7 @@ export async function getCurrentUser() {
             name: `Organization (${decodedClaims.email || decodedClaims.uid})`,
         }).returning();
         
-        const isSuperAdmin = decodedClaims.email === 'reddevil.abualror91@gmail.com'; 
+        const isSuperAdmin = decodedClaims.email === process.env.SUPERADMIN_EMAIL; 
 
         const newUsers = await db.insert(users).values({
             firebaseUid: decodedClaims.uid,

@@ -12,8 +12,12 @@ const kycSchema = z.object({
   riskLevel: z.enum(['low', 'medium', 'high']).optional().default('low'),
 });
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const { searchParams } = new URL(req.url);
+    const limit = parseInt(searchParams.get('limit') || '50');
+    const offset = parseInt(searchParams.get('offset') || '0');
+
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -24,7 +28,7 @@ export async function GET() {
        query = query.where(eq(kycApplications.tenantId, user.tenantId!)) as any;
     }
 
-    const allKyc = await query.orderBy(desc(kycApplications.createdAt));
+    const allKyc = await query.orderBy(desc(kycApplications.createdAt)).limit(limit).offset(offset);
     return NextResponse.json(allKyc);
   } catch (error) {
     console.error(error);

@@ -12,6 +12,7 @@ export default function DashboardNav() {
     { href: '/dashboard/loans', label: 'إدارة القروض' },
     { href: '/dashboard/kyc', label: 'طلبات التحقق (KYC)' },
     { href: '/dashboard/reports', label: 'التقارير والإحصائيات' },
+    { href: '/dashboard/audit-logs', label: 'سجل المراقبة' },
     { href: '/dashboard/account', label: 'حسابي' },
   ];
 

@@ -1,6 +1,7 @@
 import { defineConfig } from 'drizzle-kit';
-
-let dbUrl = process.env.DATABASE_URL!;
+import * as dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
+let dbUrl = process.env.DATABASE_URL || '';
 if (dbUrl.startsWith("psql '")) {
   dbUrl = dbUrl.substring(6, dbUrl.length - 1);
 }
