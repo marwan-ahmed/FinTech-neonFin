@@ -97,7 +97,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
 
     // Log the update action
     await logAudit({
-      tenantId: user.tenantId,
+      tenantId: user.tenantId!,
       userId: user.id || null,
       action: body.action === 'clear_loan' ? 'CLEAR_LOAN' : 'PAY_INSTALLMENT',
       entityType: 'LOAN',
