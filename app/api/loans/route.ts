@@ -8,9 +8,9 @@ import { z } from 'zod';
 
 const loanSchema = z.object({
   borrowerName: z.string().min(2, "Name must be at least 2 characters").max(100),
-  phone: z.string().optional(),
-  address: z.string().optional(),
-  job: z.string().optional(),
+  phone: z.string().optional().nullable(),
+  address: z.string().optional().nullable(),
+  job: z.string().optional().nullable(),
   assetValue: z.number().or(z.string()).transform((val) => Number(val)).refine((val) => !isNaN(val) && val >= 0, "Asset value must be a positive number"),
   totalDebt: z.number().or(z.string()).transform((val) => Number(val)).refine((val) => !isNaN(val) && val >= 0, "Total debt must be a positive number"),
   tenure: z.number().int().positive("Tenure must be a positive integer"),
@@ -71,11 +71,11 @@ export async function POST(req: Request) {
       phone: data.phone || null,
       address: data.address || null,
       job: data.job || null,
-      assetValue: data.assetValue.toString(),
-      totalDebt: data.totalDebt.toString(),
+      assetValue: parseFloat(data.assetValue.toString()).toFixed(2),
+      totalDebt: parseFloat(data.totalDebt.toString()).toFixed(2),
       tenure: data.tenure,
-      marketCardValue: data.marketCardValue?.toString() || null,
-      saleCardValue: data.saleCardValue?.toString() || null,
+      marketCardValue: data.marketCardValue ? parseFloat(data.marketCardValue.toString()).toFixed(2) : null,
+      saleCardValue: data.saleCardValue ? parseFloat(data.saleCardValue.toString()).toFixed(2) : null,
       score: data.score,
       status: data.status,
       nextDue: data.nextDue,
@@ -91,7 +91,7 @@ export async function POST(req: Request) {
           loanId: result[0].id,
           installmentNumber: sch.installmentNumber || idx + 1,
           dueDate: sch.dueDate,
-          amount: sch.amount.toString(),
+          amount: parseFloat(sch.amount).toFixed(2),
           paidAmount: '0',
           status: 'pending' as const,
           createdAt: new Date(),
@@ -111,8 +111,8 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json(result[0]);
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: 'Failed to create loan' }, { status: 500 });
+  } catch (error: any) {
+    console.error("LOAN CREATE ERROR:", error, error.stack);
+    return NextResponse.json({ error: 'Failed to create loan', details: error.message, code: error.code, detail: error.detail }, { status: 500 });
   }
 }

@@ -423,7 +423,7 @@ export default function DashboardClient() {
                 <tr>
                   <td colSpan={5} className="p-16 text-center text-[#ef4444]">
                     <div className="flex flex-col items-center justify-center gap-4">
-                      <p>حدث خطأ في الاتصال بقاعدة البيانات. الرجاء التأكد من الإعدادات.</p>
+                      <p>{error || "حدث خطأ في الاتصال. الرجاء التأكد من الإعدادات."}</p>
                       <button
                         onClick={() => window.location.reload()}
                         className="inline-flex items-center gap-2 rounded bg-[#262626] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-[#404040]"

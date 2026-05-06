@@ -127,7 +127,7 @@ export default function NewLoanModal({ onClose, onSuccess }: { onClose: () => vo
   };
 
   // Allow proceeding to step 2 only if step 1 is filled
-  const canProceedToStep2 = formData.name.trim().length > 0 && formData.phone.trim().length > 0;
+  const canProceedToStep2 = formData.name.trim().length >= 2;
 
   const exportScheduleCSV = () => {
     const headers = ["رقم الدفعة", "تاريخ الاستحقاق", "المبلغ (دينار)", "حالة الدفعة"];
@@ -165,6 +165,12 @@ export default function NewLoanModal({ onClose, onSuccess }: { onClose: () => vo
             <X size={20} />
           </button>
         </div>
+
+        {errorObj && (
+          <div className="bg-red-500/10 border border-red-500/20 text-red-500 rounded p-4 m-5 text-sm font-bold animate-in fade-in slide-in-from-top-2">
+            {errorObj}
+          </div>
+        )}
 
         {/* Content Wrapper */}
         <div className="flex-1 overflow-y-auto p-5 sm:p-6">
