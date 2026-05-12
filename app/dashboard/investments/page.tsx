@@ -1,19 +1,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Loader2, TrendingUp, Users, Building, UserCircle, Wallet, Search, Filter, Plus, Download, Printer } from 'lucide-react';
+import { Loader2, TrendingUp, Users, Building, UserCircle, Wallet, Search, Filter, Plus, Download, Printer, Edit, Trash2, ArrowUpDown } from 'lucide-react';
 import AddInvestorModal from './AddInvestorModal';
+import EditInvestorModal from './EditInvestorModal';
 import RiskAllocation from './RiskAllocation';
 
 export default function InvestmentsPage() {
   const [investors, setInvestors] = useState<any[]>([]);
   const [loans, setLoans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingInvestor, setEditingInvestor] = useState<any | null>(null);
   
-  // Advanced filters state - Proposal 2
+  // Advanced filters state
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all'); // 'all', 'retail', 'institutional'
+  const [sortBy, setSortBy] = useState('default'); // 'default', 'capitalDesc', 'capitalAsc', 'dateDesc', 'dateAsc'
 
   // KPIs
   const totalCapital = investors.reduce((sum, inv) => sum + (inv.capital || 0), 0);
@@ -53,28 +56,59 @@ export default function InvestmentsPage() {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, []);
 
+  // Delete investor handler
+  const handleDelete = async (id: string, name: string) => {
+    if (!window.confirm(`هل أنت متأكد من حذف المستثمر "${name}"؟`)) return;
+    try {
+      const res = await fetch(`/api/investors/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        fetchData();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert(errData.error || 'فشل حذف المستثمر');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('حدث خطأ أثناء الحذف');
+    }
+  };
+
   // Apply filters
-  const filteredInvestors = investors.filter(inv => {
+  let filteredInvestors = investors.filter(inv => {
     const matchesSearch = inv.name?.toLowerCase().includes(searchQuery.toLowerCase()) || false;
     const matchesType = filterType === 'all' || inv.type === filterType;
     return matchesSearch && matchesType;
   });
 
-  // Automated Reporting - Proposal 4
+  // Apply sorting
+  if (sortBy === 'capitalDesc') {
+    filteredInvestors.sort((a, b) => (b.capital || 0) - (a.capital || 0));
+  } else if (sortBy === 'capitalAsc') {
+    filteredInvestors.sort((a, b) => (a.capital || 0) - (b.capital || 0));
+  } else if (sortBy === 'dateDesc') {
+    filteredInvestors.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+  } else if (sortBy === 'dateAsc') {
+    filteredInvestors.sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
+  }
+
+  // Automated Reporting
   const exportToCSV = () => {
-    const headers = ["اسم المستثمر", "النوع", "رأس المال (د.ع)", "تاريخ الإضافة"];
+    const headers = ["اسم المستثمر", "النوع", "رأس المال (د.ع)", "نسبة المساهمة", "تاريخ الإضافة"];
     const csvContent = [
       headers.join(","),
-      ...filteredInvestors.map(inv => [
-        `"${inv.name || 'بدون اسم'}"`,
-        inv.type === 'institutional' ? 'مؤسسي' : 'أفراد',
-        inv.capital || 0,
-        inv.createdAt ? new Date(inv.createdAt).toLocaleDateString('ar-IQ') : '-'
-      ].join(","))
+      ...filteredInvestors.map(inv => {
+        const share = totalCapital > 0 ? ((inv.capital || 0) / totalCapital) * 100 : 0;
+        return [
+          `"${inv.name || 'بدون اسم'}"`,
+          inv.type === 'institutional' ? 'مؤسسي' : 'أفراد',
+          inv.capital || 0,
+          `"${share.toFixed(2)}%"`,
+          inv.createdAt ? new Date(inv.createdAt).toLocaleDateString('ar-IQ') : '-'
+        ].join(",");
+      })
     ].join("\n");
 
     const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -120,7 +154,7 @@ export default function InvestmentsPage() {
             </button>
           )}
           <button 
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => setIsAddModalOpen(true)}
             className="bg-[#10b981] hover:bg-[#34d399] text-black font-bold py-2 px-4 rounded transition-colors flex items-center gap-2"
           >
             <Plus size={18} />
@@ -129,7 +163,7 @@ export default function InvestmentsPage() {
         </div>
       </div>
 
-      {/* KPI Dashboard - Proposal 1 */}
+      {/* KPI Dashboard */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-[#141414] border border-[#262626] rounded-lg p-5 flex flex-col justify-between">
           <div className="flex justify-between items-start mb-4">
@@ -195,12 +229,12 @@ export default function InvestmentsPage() {
         </div>
       </div>
 
-      {/* Risk & Asset Allocation - Proposal 3 */}
+      {/* Risk & Asset Allocation */}
       {!loading && <RiskAllocation investors={investors} loans={loans} />}
 
       <div className="flex flex-1 flex-col overflow-hidden rounded-lg border border-[#262626] bg-[#141414]">
         
-        {/* Controls Bar - Proposal 2 & 4 */}
+        {/* Controls Bar */}
         <div className="border-b border-[#262626] bg-[#0f0f0f] p-4 flex flex-col lg:flex-row gap-4 justify-between items-center print:hidden">
           <div className="relative w-full lg:w-72">
             <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#737373]" />
@@ -213,18 +247,34 @@ export default function InvestmentsPage() {
             />
           </div>
           
-          <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto justify-between lg:justify-end">
+          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-between lg:justify-end">
             <div className="flex items-center gap-2">
               <Filter size={16} className="text-[#737373]" />
               <span className="text-xs text-[#737373] uppercase tracking-widest hidden sm:inline">تصنيف:</span>
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
-                className="rounded border border-[#262626] bg-[#1a1a1a] py-2 px-3 text-sm text-center text-white focus:border-[#10b981] focus:outline-none focus:ring-1 focus:ring-[#10b981] transition-colors"
+                className="rounded border border-[#262626] bg-[#1a1a1a] py-1.5 px-3 text-xs text-center text-white focus:border-[#10b981] focus:outline-none transition-colors"
               >
                 <option value="all">الكل</option>
                 <option value="retail">أفراد</option>
                 <option value="institutional">مؤسسات</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <ArrowUpDown size={16} className="text-[#737373]" />
+              <span className="text-xs text-[#737373] uppercase tracking-widest hidden sm:inline">ترتيب:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="rounded border border-[#262626] bg-[#1a1a1a] py-1.5 px-3 text-xs text-center text-white focus:border-[#10b981] focus:outline-none transition-colors"
+              >
+                <option value="default">الافتراضي</option>
+                <option value="capitalDesc">رأس المال: الأعلى</option>
+                <option value="capitalAsc">رأس المال: الأقل</option>
+                <option value="dateDesc">الأحدث انضماماً</option>
+                <option value="dateAsc">الأقدم انضماماً</option>
               </select>
             </div>
             
@@ -233,18 +283,18 @@ export default function InvestmentsPage() {
             <div className="flex items-center gap-2">
               <button 
                 onClick={exportToCSV}
-                className="flex items-center gap-2 text-sm text-[#737373] hover:text-[#10b981] transition-colors bg-[#1a1a1a] border border-[#262626] rounded px-3 py-2"
+                className="flex items-center gap-2 text-xs text-[#737373] hover:text-[#10b981] transition-colors bg-[#1a1a1a] border border-[#262626] rounded px-3 py-2"
                 title="تصدير كملف إكسل (CSV)"
               >
-                <Download size={16} />
+                <Download size={14} />
                 <span className="hidden sm:inline">تصدير CSV</span>
               </button>
               <button 
                 onClick={printReport}
-                className="flex items-center gap-2 text-sm text-[#737373] hover:text-white transition-colors bg-[#1a1a1a] border border-[#262626] rounded px-3 py-2"
+                className="flex items-center gap-2 text-xs text-[#737373] hover:text-white transition-colors bg-[#1a1a1a] border border-[#262626] rounded px-3 py-2"
                 title="طباعة التقرير (PDF)"
               >
-                <Printer size={16} />
+                <Printer size={14} />
                 <span className="hidden sm:inline">طباعة PDF</span>
               </button>
             </div>
@@ -258,13 +308,15 @@ export default function InvestmentsPage() {
                 <th className="p-4 font-normal">المستثمر</th>
                 <th className="p-4 font-normal">نوع المستثمر</th>
                 <th className="p-4 font-normal">رأس المال المُودع (دينار)</th>
+                <th className="p-4 font-normal">نسبة المساهمة</th>
                 <th className="p-4 font-normal">تاريخ الانضمام</th>
+                <th className="p-4 font-normal text-center print:hidden">إجراءات</th>
               </tr>
             </thead>
             <tbody className="font-mono text-sm">
               {loading ? (
                 <tr>
-                  <td colSpan={4} className="p-8 text-center text-[#737373]">
+                  <td colSpan={6} className="p-8 text-center text-[#737373]">
                     <div className="flex justify-center items-center h-full">
                       <Loader2 className="animate-spin text-[#10b981]" />
                     </div>
@@ -272,27 +324,59 @@ export default function InvestmentsPage() {
                 </tr>
               ) : filteredInvestors.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="p-8 text-center text-[#737373]">
+                  <td colSpan={6} className="p-8 text-center text-[#737373]">
                     {investors.length > 0 ? 'لا توجد نتائج مطابقة للبحث' : 'لا يوجد مستثمرين بعد'}
                   </td>
                 </tr>
               ) : (
-                filteredInvestors.map((inv) => (
-                  <tr key={inv.id} className="border-b border-[#262626] transition-colors hover:bg-[#1a1a1a]">
-                    <td className="p-4 text-white font-sans">{inv.name || 'بدون اسم'}</td>
-                    <td className="p-4 text-[#737373]">
-                      {inv.type === 'institutional' ? (
-                         <span className="flex items-center gap-1"><Building size={14} className="text-purple-500"/> مؤسسي</span>
-                      ) : (
-                         <span className="flex items-center gap-1"><UserCircle size={14} className="text-orange-500"/> أفراد</span>
-                      )}
-                    </td>
-                    <td className="p-4 text-[#ededed]" dir="ltr">{(inv.capital || 0).toLocaleString()} د.ع</td>
-                    <td className="p-4 text-[#ededed]">
-                       {inv.createdAt ? new Date(inv.createdAt).toLocaleDateString('ar-IQ') : '-'}
-                    </td>
-                  </tr>
-                ))
+                filteredInvestors.map((inv) => {
+                  const sharePercentage = totalCapital > 0 ? ((inv.capital || 0) / totalCapital) * 100 : 0;
+                  return (
+                    <tr key={inv.id} className="border-b border-[#262626] transition-colors hover:bg-[#1a1a1a]">
+                      <td className="p-4 text-white font-sans font-bold">{inv.name || 'بدون اسم'}</td>
+                      <td className="p-4 text-[#737373]">
+                        {inv.type === 'institutional' ? (
+                           <span className="flex items-center gap-1"><Building size={14} className="text-purple-500"/> مؤسسي</span>
+                        ) : (
+                           <span className="flex items-center gap-1"><UserCircle size={14} className="text-orange-500"/> أفراد</span>
+                        )}
+                      </td>
+                      <td className="p-4 text-[#10b981] font-bold" dir="ltr">{(inv.capital || 0).toLocaleString()} د.ع</td>
+                      <td className="p-4 text-[#ededed]">
+                        <div className="flex items-center gap-2 justify-end">
+                          <span className="text-xs">{sharePercentage.toFixed(1)}%</span>
+                          <div className="w-12 bg-[#262626] h-1.5 rounded-full overflow-hidden">
+                            <div 
+                              className="bg-[#10b981] h-full rounded-full" 
+                              style={{ width: `${Math.min(100, sharePercentage)}%` }}
+                            />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4 text-[#ededed]">
+                         {inv.createdAt ? new Date(inv.createdAt).toLocaleDateString('ar-IQ') : '-'}
+                      </td>
+                      <td className="p-4 text-center print:hidden">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => setEditingInvestor(inv)}
+                            className="p-1.5 text-[#737373] hover:text-blue-400 hover:bg-blue-500/10 rounded transition-colors"
+                            title="تعديل"
+                          >
+                            <Edit size={15} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(inv.id, inv.name || '')}
+                            className="p-1.5 text-[#737373] hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                            title="حذف"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -300,12 +384,22 @@ export default function InvestmentsPage() {
       </div>
       
       <AddInvestorModal 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
         onSuccess={() => {
-          setIsModalOpen(false);
+          setIsAddModalOpen(false);
           fetchData();
         }}
+      />
+
+      <EditInvestorModal 
+        isOpen={!!editingInvestor}
+        onClose={() => setEditingInvestor(null)}
+        onSuccess={() => {
+          setEditingInvestor(null);
+          fetchData();
+        }}
+        investor={editingInvestor}
       />
     </div>
   );

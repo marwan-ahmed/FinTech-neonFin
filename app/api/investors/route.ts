@@ -20,14 +20,15 @@ export async function GET(req: Request) {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    let query = db.select().from(investors);
-    
-    // If superadmin, return all. Otherwise return only tenant's investors.
-    if (user.role !== 'superadmin') {
-       query = query.where(eq(investors.tenantId, user.tenantId!)) as any;
-    }
+    const conditions = user.role === 'superadmin' ? undefined : eq(investors.tenantId, user.tenantId!);
 
-    const allInvestors = await query.orderBy(desc(investors.createdAt)).limit(limit).offset(offset);
+    const allInvestors = await db.select()
+      .from(investors)
+      .where(conditions)
+      .orderBy(desc(investors.createdAt))
+      .limit(limit)
+      .offset(offset);
+
     return NextResponse.json(allInvestors);
   } catch (error) {
     console.error(error);

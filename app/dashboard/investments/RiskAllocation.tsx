@@ -47,14 +47,14 @@ export default function RiskAllocation({
     0,
   );
 
-  const activeLoans = loans.filter(
-    (l) => l.status === "active" || l.status === "completed",
+  // Deployed capital that is currently active and outstanding
+  const activeOutstandingLoans = loans.filter(
+    (l) => l.status === "active" || l.status === "approved",
   );
-  const totalInvested = activeLoans.reduce(
+  const activeInvestedAmount = activeOutstandingLoans.reduce(
     (sum, loan) => sum + (loan.totalDebt || 0),
     0,
   );
-  const liquidCash = Math.max(0, totalCapital - totalInvested);
 
   const defaultedLoans = loans.filter((l) => l.status === "defaulted");
   const defaultedAmount = defaultedLoans.reduce(
@@ -62,12 +62,19 @@ export default function RiskAllocation({
     0,
   );
 
+  // Total current portfolio assets locked in loans
+  const totalInvested = activeInvestedAmount + defaultedAmount;
+
+  // Liquid cash available to lend. Restricts completed loans from draining liquidity.
+  const liquidCash = Math.max(0, totalCapital - totalInvested);
+
+  // Effective Total Portfolio Value for accurate 100% distribution display
+  const totalPortfolioValue = liquidCash + activeInvestedAmount + defaultedAmount;
+
   // Health Score (0-100)
-  // Max score if 0 defaults and moderate liquidity.
-  // Formula: start with 100, deduct % of defaulted amount out of total capital * 2, deduct if liquid > 50% (underutilized).
   let healthScore = 100;
-  const defaultRatio = totalCapital > 0 ? defaultedAmount / totalCapital : 0;
-  const liquidRatio = totalCapital > 0 ? liquidCash / totalCapital : 0;
+  const defaultRatio = totalPortfolioValue > 0 ? defaultedAmount / totalPortfolioValue : 0;
+  const liquidRatio = totalPortfolioValue > 0 ? liquidCash / totalPortfolioValue : 0;
 
   healthScore -= defaultRatio * 200; // 10% default means -20 score
   if (liquidRatio > 0.6) healthScore -= 15; // penalize too much idle cash
@@ -91,7 +98,7 @@ export default function RiskAllocation({
     { name: "سيولة متاحة", value: liquidCash, color: "#10b981" }, // Emerald
     {
       name: "قروض نشطة",
-      value: totalInvested - defaultedAmount,
+      value: activeInvestedAmount,
       color: "#3b82f6",
     }, // Blue
     { name: "قروض متعثرة", value: defaultedAmount, color: "#ef4444" }, // Red
@@ -202,7 +209,7 @@ export default function RiskAllocation({
               </div>
               <span className="text-xs font-mono text-white">
                 {item.value > 0
-                  ? `${((item.value / totalCapital) * 100).toFixed(1)}%`
+                  ? `${((item.value / (totalPortfolioValue || 1)) * 100).toFixed(1)}%`
                   : "0%"}
               </span>
             </div>
