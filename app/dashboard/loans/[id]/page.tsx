@@ -274,7 +274,7 @@ export default function LoanDetailsPage({ params }: { params: Promise<{ id: stri
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Borrower Info Card */}
-        <div className="bg-[#141414] print:bg-white border border-[#262626] print:border-gray-200 rounded-lg p-6">
+        <div className="bg-gradient-to-br from-[#141414] to-[#1a1a1a] print:bg-white border border-[#262626] hover:border-[#10b981]/30 print:border-gray-200 rounded-xl p-6 transition-all duration-300 shadow-xl">
           <div className="flex items-center gap-2 mb-6 border-b border-[#262626] print:border-gray-200 pb-3">
             <User size={18} className="text-[#10b981] print:text-black" />
             <h3 className="text-lg font-bold text-white print:text-black">بيانات الزبون</h3>
@@ -300,7 +300,7 @@ export default function LoanDetailsPage({ params }: { params: Promise<{ id: stri
         </div>
 
         {/* Loan Info Card */}
-        <div className="bg-[#141414] print:bg-white border border-[#262626] print:border-gray-200 rounded-lg p-6">
+        <div className="bg-gradient-to-br from-[#141414] to-[#1a1a1a] print:bg-white border border-[#262626] hover:border-[#10b981]/30 print:border-gray-200 rounded-xl p-6 transition-all duration-300 shadow-xl">
           <div className="flex items-center gap-2 mb-6 border-b border-[#262626] print:border-gray-200 pb-3">
             <Info size={18} className="text-[#10b981] print:text-black" />
             <h3 className="text-lg font-bold text-white print:text-black">تفاصيل القرض</h3>
@@ -335,7 +335,7 @@ export default function LoanDetailsPage({ params }: { params: Promise<{ id: stri
       </div>
 
       {/* Schedule Table */}
-      <div className="bg-[#141414] print:bg-white border border-[#262626] print:border-gray-200 rounded-lg overflow-hidden flex-1 flex flex-col">
+      <div className="bg-[#141414] print:bg-white border border-[#262626] print:border-gray-200 rounded-xl overflow-hidden flex-1 flex flex-col shadow-2xl">
           <div className="flex items-center gap-2 p-4 border-b border-[#262626] print:border-gray-200 bg-[#1a1a1a] print:bg-white">
             <FileText size={18} className="text-[#10b981] print:text-black" />
             <h3 className="text-sm font-bold text-white print:text-black uppercase tracking-wider">جدول الدفعات والاستحقاق</h3>
