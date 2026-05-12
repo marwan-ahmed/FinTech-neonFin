@@ -87,8 +87,36 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
       const nextPending = updatedSchedules.find(s => s.status === 'pending' || s.status === 'late');
       const nextDue = nextPending ? new Date(nextPending.dueDate) : null;
 
+      // ── 3.2: Dynamic Credit Score Engine ──────────────────────────
+      const totalInstallments = updatedSchedules.length;
+      const paidOnTime = updatedSchedules.filter(s => {
+        if (s.status !== 'paid') return false;
+        if (!s.paidAt) return true; // assume on-time if no paidAt recorded
+        return new Date(s.paidAt) <= new Date(s.dueDate);
+      }).length;
+      const lateCount = updatedSchedules.filter(s => 
+        s.status === 'late' || s.status === 'defaulted' ||
+        (s.status === 'pending' && new Date(s.dueDate) < new Date())
+      ).length;
+
+      let computedScore = 'A';
+      if (totalInstallments > 0) {
+        const onTimeRatio = paidOnTime / totalInstallments;
+        const lateRatio = lateCount / totalInstallments;
+
+        if (lateRatio >= 0.5) {
+          computedScore = 'C';
+        } else if (lateRatio >= 0.25 || onTimeRatio < 0.5) {
+          computedScore = 'B';
+        } else if (onTimeRatio >= 0.8 && lateCount === 0) {
+          computedScore = 'A+';
+        } else {
+          computedScore = 'A';
+        }
+      }
+
       const updatedInfo = await tx.update(loans)
-                            .set({ status: newStatus, nextDue, updatedAt: new Date() })
+                            .set({ status: newStatus, nextDue, score: computedScore, updatedAt: new Date() })
                             .where(conditions)
                             .returning();
 

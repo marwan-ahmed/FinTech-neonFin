@@ -2,7 +2,7 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, ArrowRight, Printer, Download, User, Info, FileText, CheckCircle, AlertTriangle, Edit, Trash2, Save, X } from 'lucide-react';
+import { Loader2, ArrowRight, Printer, Download, User, Info, FileText, CheckCircle, AlertTriangle, Edit, Trash2, Save, X, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import Link from 'next/link';
 
 export default function LoanDetailsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -266,6 +266,119 @@ export default function LoanDetailsPage({ params }: { params: Promise<{ id: stri
     window.print();
   };
 
+  // ── 4.1: Branded Full-Contract Export ──────────────────────────
+  const printFullContract = () => {
+    if (!loan) return;
+    const scheduleRows = loan.schedule.map((s: any) => {
+      const amt = parseFloat(s.amount || '0');
+      const paid = parseFloat(s.paidAmount || '0');
+      const rem = Math.max(0, amt - paid);
+      const statusText = s.status === 'paid' ? 'مسدد ✓' : paid > 0 ? 'جزئي' : 'مستحق';
+      const statusColor = s.status === 'paid' ? '#065f46' : paid > 0 ? '#1e40af' : '#991b1b';
+      return `<tr>
+        <td style="padding:8px;border:1px solid #e5e7eb;text-align:center">#${s.installmentNumber}</td>
+        <td style="padding:8px;border:1px solid #e5e7eb;text-align:center">${new Date(s.dueDate).toLocaleDateString('ar-IQ')}</td>
+        <td style="padding:8px;border:1px solid #e5e7eb;text-align:center;font-family:monospace">${Math.round(amt).toLocaleString()}</td>
+        <td style="padding:8px;border:1px solid #e5e7eb;text-align:center;font-family:monospace;color:#10b981">${Math.round(paid).toLocaleString()}</td>
+        <td style="padding:8px;border:1px solid #e5e7eb;text-align:center;font-family:monospace;color:#f59e0b">${Math.round(rem).toLocaleString()}</td>
+        <td style="padding:8px;border:1px solid #e5e7eb;text-align:center;font-weight:bold;color:${statusColor}">${statusText}</td>
+      </tr>`;
+    }).join('');
+
+    const contractHTML = `<html dir="rtl">
+      <head>
+        <title>عقد تسهيلات ائتمانية - ${loan.borrowerName}</title>
+        <style>
+          * { margin:0; padding:0; box-sizing:border-box; }
+          body { font-family:'Segoe UI',Tahoma,sans-serif; color:#1a1a1a; background:#fff; }
+          .page { max-width:800px; margin:0 auto; padding:40px; }
+          .brand { text-align:center; padding-bottom:24px; border-bottom:3px solid #10b981; margin-bottom:24px; }
+          .brand h1 { font-size:32px; color:#10b981; letter-spacing:2px; margin-bottom:4px; }
+          .brand p { color:#666; font-size:13px; }
+          .contract-title { text-align:center; margin:20px 0; padding:12px; background:linear-gradient(135deg,#f0fdf4,#ecfdf5); border:2px solid #10b981; border-radius:8px; }
+          .contract-title h2 { font-size:20px; color:#064e3b; }
+          .contract-title p { font-size:12px; color:#666; margin-top:4px; }
+          .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:20px 0; }
+          .info-box { padding:14px; border:1px solid #e5e7eb; border-radius:6px; background:#fafafa; }
+          .info-box label { font-size:10px; color:#999; text-transform:uppercase; letter-spacing:1px; display:block; margin-bottom:4px; }
+          .info-box span { font-size:15px; font-weight:bold; color:#1a1a1a; }
+          .section-title { font-size:14px; font-weight:bold; color:#10b981; margin:24px 0 8px; padding-bottom:6px; border-bottom:1px solid #e5e7eb; }
+          table { width:100%; border-collapse:collapse; margin:12px 0; font-size:13px; }
+          th { background:#f9fafb; padding:10px 8px; border:1px solid #e5e7eb; font-size:11px; text-transform:uppercase; color:#666; letter-spacing:0.5px; }
+          .signatures { display:flex; justify-content:space-between; margin-top:60px; padding-top:20px; border-top:2px dashed #ccc; }
+          .sig-block { text-align:center; width:40%; font-size:14px; font-weight:bold; }
+          .sig-line { margin-top:40px; border-top:1px solid #333; padding-top:6px; font-size:12px; color:#666; }
+          .watermark { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-30deg); font-size:80px; color:rgba(16,185,129,0.04); font-weight:900; pointer-events:none; z-index:0; letter-spacing:8px; }
+          @media print { .page { padding:20px; } .watermark { color:rgba(16,185,129,0.03); } }
+        </style>
+      </head>
+      <body>
+        <div class="watermark">NEONFIN</div>
+        <div class="page">
+          <div class="brand">
+            <h1>neonFin</h1>
+            <p>منصة الحلول المالية المتكاملة | Financial Solutions Platform</p>
+          </div>
+
+          <div class="contract-title">
+            <h2>عقد تسهيلات ائتمانية (مرابحة)</h2>
+            <p>رقم العقد: CTR-${loan.id.substring(0, 8).toUpperCase()} | تاريخ التحرير: ${new Date().toLocaleDateString('ar-IQ')}</p>
+          </div>
+
+          <div class="section-title">بيانات المقترض / المستفيد</div>
+          <div class="info-grid">
+            <div class="info-box"><label>الاسم الكامل</label><span>${loan.borrowerName}</span></div>
+            <div class="info-box"><label>رقم الهاتف</label><span dir="ltr">${loan.phone || '-'}</span></div>
+            <div class="info-box"><label>العنوان السكني</label><span>${loan.address || '-'}</span></div>
+            <div class="info-box"><label>المهنة / الوظيفة</label><span>${loan.job || '-'}</span></div>
+          </div>
+
+          <div class="section-title">الشروط المالية للتسهيل</div>
+          <div class="info-grid">
+            <div class="info-box"><label>مبلغ التمويل (المستلم)</label><span dir="ltr" style="color:#10b981">${loan.assetValue.toLocaleString()} IQD</span></div>
+            <div class="info-box"><label>المديونية الإجمالية</label><span dir="ltr" style="color:#ef4444">${loan.totalDebt.toLocaleString()} IQD</span></div>
+            <div class="info-box"><label>المدة الإجمالية</label><span>${loan.tenure} شهر</span></div>
+            <div class="info-box"><label>قيمة القسط الشهري</label><span dir="ltr">${Math.round(loan.totalDebt / loan.tenure).toLocaleString()} IQD</span></div>
+          </div>
+
+          <div class="section-title">جدول الأقساط والاستحقاق</div>
+          <table>
+            <thead>
+              <tr>
+                <th>الدفعة</th>
+                <th>تاريخ الاستحقاق</th>
+                <th>المبلغ</th>
+                <th>المسدد</th>
+                <th>المتبقي</th>
+                <th>الحالة</th>
+              </tr>
+            </thead>
+            <tbody>${scheduleRows}</tbody>
+          </table>
+
+          <div class="signatures">
+            <div class="sig-block">
+              الطرف الأول (المموّل)
+              <div class="sig-line">التوقيع والختم</div>
+            </div>
+            <div class="sig-block">
+              الطرف الثاني (المستفيد)
+              <div class="sig-line">التوقيع</div>
+            </div>
+          </div>
+        </div>
+        <script>window.onload=()=>{window.print();}</script>
+      </body>
+    </html>`;
+
+    const w = window.open('', '_blank');
+    if (w) {
+      w.document.open();
+      w.document.write(contractHTML);
+      w.document.close();
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -311,6 +424,12 @@ export default function LoanDetailsPage({ params }: { params: Promise<{ id: stri
             className="flex items-center gap-1.5 bg-[#10b981] text-black text-xs font-bold px-3 py-2 rounded-lg hover:bg-[#34d399] transition-colors">
             <Printer size={15} />
             <span>طباعة</span>
+          </button>
+          <button 
+            onClick={printFullContract}
+            className="flex items-center gap-1.5 bg-[#10b981]/10 border border-[#10b981]/30 text-[#10b981] text-xs font-bold px-3 py-2 rounded-lg hover:bg-[#10b981]/20 transition-colors">
+            <FileText size={15} />
+            <span>تصدير العقد</span>
           </button>
           
           {/* Delete Action Button */}
@@ -403,6 +522,35 @@ export default function LoanDetailsPage({ params }: { params: Promise<{ id: stri
                 )}
               </p>
             </div>
+            <div className="col-span-2 mt-2 pt-3 border-t border-[#262626] print:border-gray-200">
+              <p className="text-[10px] text-[#737373] print:text-gray-500 uppercase mb-2">التصنيف الائتماني الديناميكي</p>
+              <div className="flex items-center gap-3">
+                {(() => {
+                  const s = loan.score || 'A';
+                  const scoreConfig: Record<string, {color: string, bg: string, border: string, label: string, glow: string}> = {
+                    'A+': { color: 'text-[#10b981]', bg: 'bg-[#10b981]/15', border: 'border-[#10b981]', label: 'ممتاز+', glow: 'shadow-[0_0_12px_rgba(16,185,129,0.5)]' },
+                    'A':  { color: 'text-[#10b981]', bg: 'bg-[#10b981]/10', border: 'border-[#10b981]/60', label: 'جيد جداً', glow: 'shadow-[0_0_8px_rgba(16,185,129,0.3)]' },
+                    'B':  { color: 'text-[#f59e0b]', bg: 'bg-[#f59e0b]/10', border: 'border-[#f59e0b]/60', label: 'متوسط', glow: 'shadow-[0_0_8px_rgba(245,158,11,0.3)]' },
+                    'C':  { color: 'text-[#ef4444]', bg: 'bg-[#ef4444]/10', border: 'border-[#ef4444]/60', label: 'مرتفع المخاطر', glow: 'shadow-[0_0_8px_rgba(239,68,68,0.3)]' },
+                  };
+                  const cfg = scoreConfig[s] || scoreConfig['A'];
+                  const TrendIcon = s === 'A+' ? TrendingUp : s === 'C' ? TrendingDown : Minus;
+                  const trendLabel = s === 'A+' ? 'اتجاه تصاعدي' : s === 'C' ? 'اتجاه هبوطي' : 'مستقر';
+                  return (
+                    <>
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-black font-mono border-2 ${cfg.color} ${cfg.bg} ${cfg.border} ${cfg.glow} print:shadow-none print:border-gray-300`}>
+                        {s}
+                        <span className="text-[10px] font-bold font-sans mr-1">{cfg.label}</span>
+                      </span>
+                      <span className={`inline-flex items-center gap-1 text-[10px] ${cfg.color} font-bold`}>
+                        <TrendIcon size={13} />
+                        {trendLabel}
+                      </span>
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -447,12 +595,13 @@ export default function LoanDetailsPage({ params }: { params: Promise<{ id: stri
                       <td className="p-4 text-[#f59e0b] print:text-black" dir="ltr">{Math.round(remaining).toLocaleString()}</td>
                       <td className="p-4">
                         {installment.status === 'pending' ? (
-                          <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset ${isLate ? 'bg-[#ef4444]/10 text-[#ef4444] ring-[#ef4444]/20' : isPartial ? 'bg-[#3b82f6]/10 text-[#3b82f6] ring-[#3b82f6]/20' : 'bg-[#f59e0b]/10 text-[#f59e0b] ring-[#f59e0b]/20'} print:border print:border-gray-300 print:text-black`}>
+                          <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ring-1 ring-inset ${isLate ? 'bg-[#ef4444]/10 text-[#ef4444] ring-[#ef4444]/20' : isPartial ? 'bg-[#3b82f6]/10 text-[#3b82f6] ring-[#3b82f6]/20' : 'bg-[#f59e0b]/10 text-[#f59e0b] ring-[#f59e0b]/20'} print:border print:border-gray-300 print:text-black`}>
                             {isLate ? 'متأخر' : isPartial ? 'تسديد جزئي' : 'قيد الانتظار'}
                           </span>
                         ) : (
-                          <span className="inline-flex rounded-full bg-[#10b981]/10 px-2 py-1 text-xs font-medium text-[#10b981] ring-1 ring-inset ring-[#10b981]/20 print:border print:border-gray-300 print:text-black">
-                            مدفوع كلياً
+                          <span className="inline-flex items-center gap-1 rounded-md bg-[#10b981]/20 px-2.5 py-1 text-xs font-black text-[#10b981] ring-2 ring-inset ring-[#10b981] shadow-[0_0_12px_rgba(16,185,129,0.4)] animate-in zoom-in-75 duration-300 print:border print:border-gray-300 print:text-black print:shadow-none border border-dashed border-[#10b981]">
+                            <CheckCircle size={12} className="animate-bounce" />
+                            ختم: تم السداد
                           </span>
                         )}
                       </td>

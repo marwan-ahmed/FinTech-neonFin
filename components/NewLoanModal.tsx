@@ -7,6 +7,7 @@ export default function NewLoanModal({ onClose, onSuccess }: { onClose: () => vo
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [existingBorrowers, setExistingBorrowers] = useState<string[]>([]);
+  const [existingBorrowerList, setExistingBorrowerList] = useState<{name: string, phone: string, address: string, job: string}[]>([]);
   const [nameWarning, setNameWarning] = useState<string | null>(null);
 
   const [errorObj, setErrorObj] = useState<string | null>(null);
@@ -18,8 +19,22 @@ export default function NewLoanModal({ onClose, onSuccess }: { onClose: () => vo
         const res = await fetch('/api/loans');
         if (res.ok) {
           const data = await res.json();
-          // Extract existing borrower names
-          const names = data.map((l: any) => l.borrowerName?.trim().toLowerCase()).filter(Boolean);
+          const list: {name: string, phone: string, address: string, job: string}[] = [];
+          const seen = new Set<string>();
+          data.forEach((l: any) => {
+            const trimmed = l.borrowerName?.trim();
+            if (trimmed && !seen.has(trimmed.toLowerCase())) {
+              seen.add(trimmed.toLowerCase());
+              list.push({
+                name: trimmed,
+                phone: l.phone || '',
+                address: l.address || '',
+                job: l.job || ''
+              });
+            }
+          });
+          setExistingBorrowerList(list);
+          const names = list.map(l => l.name.toLowerCase());
           setExistingBorrowers(names);
         }
       } catch (err) {
@@ -207,8 +222,41 @@ export default function NewLoanModal({ onClose, onSuccess }: { onClose: () => vo
                   <div className="col-span-1 sm:col-span-2">
                     <label className="text-xs text-[#737373] uppercase mb-1.5 block tracking-wider">الاسم الرباعي واللقب</label>
                     <input required name="name" value={formData.name} onChange={handleInputChange} className="w-full bg-[#0f0f0f] border border-[#262626] rounded px-4 py-3 text-white focus:border-[#10b981] outline-none transition-colors" placeholder="مثال: أحمد محمد علي عبدالله" />
+                    {existingBorrowerList.length > 0 && (
+                      <div className="mt-2 flex flex-col gap-1.5 bg-[#0f0f0f] p-2.5 rounded-lg border border-[#262626]">
+                        <span className="text-[10px] text-[#737373] font-bold">اختيار سريع وتعبئة تلقائية من الزبائن المسجلين مسبقاً:</span>
+                        <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
+                          {existingBorrowerList
+                            .filter(b => !formData.name || b.name.toLowerCase().includes(formData.name.toLowerCase()))
+                            .map((b, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    name: b.name,
+                                    phone: b.phone || prev.phone,
+                                    address: b.address || prev.address,
+                                    job: b.job || prev.job
+                                  }));
+                                  setNameWarning("تم سحب بيانات الزبون المسجلة مسبقاً بنجاح.");
+                                }}
+                                className={`text-[10px] px-2.5 py-1 rounded-md border transition-all flex items-center gap-1.5 ${
+                                  formData.name === b.name
+                                    ? 'bg-[#10b981]/20 border-[#10b981] text-[#10b981] font-bold'
+                                    : 'bg-[#141414] border-[#262626] hover:border-[#10b981]/40 text-[#ededed]'
+                                }`}
+                              >
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]"></span>
+                                <span>{b.name}</span>
+                              </button>
+                            ))}
+                        </div>
+                      </div>
+                    )}
                     {nameWarning && (
-                      <p className="mt-2 text-xs text-[#f59e0b] flex items-center gap-1 font-bold">
+                      <p className={`mt-2 text-xs flex items-center gap-1 font-bold ${nameWarning.includes('بنجاح') ? 'text-[#10b981]' : 'text-[#f59e0b]'}`}>
                         <AlertTriangle size={14} />
                         {nameWarning}
                       </p>
@@ -288,36 +336,65 @@ export default function NewLoanModal({ onClose, onSuccess }: { onClose: () => vo
                   </div>
 
                   {/* Output Live Results */}
-                  <div className="bg-[#10b981]/5 rounded border border-[#10b981]/20 p-5 sm:p-6 flex flex-col justify-center text-center sm:text-right">
-                    <h4 className="text-sm font-bold text-[#10b981] mb-6 flex justify-center sm:justify-start items-center gap-2">
-                      <Calculator size={18} />
-                      توضيح الاحتساب المباشر
-                    </h4>
-                    
-                    <div className="space-y-5">
-                      <div className="flex flex-col sm:flex-row justify-between sm:items-end border-b border-[#10b981]/10 pb-4 gap-2">
-                        <div>
-                          <p className="text-[11px] text-[#737373] mb-1">السلعة المطلوبة للشراء</p>
-                          <p className="font-mono text-xl text-white">{cardsCount.toLocaleString('en-US')}</p>
+                  <div className="bg-[#10b981]/5 rounded border border-[#10b981]/20 p-5 sm:p-6 flex flex-col justify-between text-center sm:text-right">
+                    <div>
+                      <h4 className="text-sm font-bold text-[#10b981] mb-5 flex justify-center sm:justify-start items-center gap-2">
+                        <Calculator size={18} />
+                        توضيح الاحتساب المباشر
+                      </h4>
+                      
+                      <div className="space-y-4">
+                        <div className="flex flex-col sm:flex-row justify-between sm:items-end border-b border-[#10b981]/10 pb-3 gap-1">
+                          <div>
+                            <p className="text-[11px] text-[#737373] mb-1">السلعة المطلوبة للشراء</p>
+                            <p className="font-mono text-lg text-white">{cardsCount.toLocaleString('en-US')}</p>
+                          </div>
+                          <span className="text-xs text-[#10b981]">بطاقة تعبئة</span>
                         </div>
-                        <span className="text-xs text-[#10b981]">بطاقة تعبئة</span>
-                      </div>
 
-                      <div className="flex flex-col sm:flex-row justify-between sm:items-end border-b border-[#10b981]/10 pb-4 gap-2">
-                        <div>
-                          <p className="text-[11px] text-[#737373] mb-1">المديونية (إجمالي السداد)</p>
-                          <p className="font-mono text-2xl font-bold text-white tracking-tight">{Math.round(totalDebt).toLocaleString('en-US')}</p>
+                        <div className="flex flex-col sm:flex-row justify-between sm:items-end border-b border-[#10b981]/10 pb-3 gap-1">
+                          <div>
+                            <p className="text-[11px] text-[#737373] mb-1">المديونية (إجمالي السداد)</p>
+                            <p className="font-mono text-xl font-bold text-white tracking-tight">{Math.round(totalDebt).toLocaleString('en-US')}</p>
+                          </div>
+                          <span className="text-xs text-[#10b981]">دينار عراقي</span>
                         </div>
-                        <span className="text-xs text-[#10b981]">دينار عراقي</span>
-                      </div>
 
-                      <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-2">
-                        <div>
-                          <p className="text-[11px] text-[#737373] mb-1">الدفعة الشهرية المتوقعة</p>
-                          <p className="font-mono text-3xl font-bold text-[#10b981] tracking-tighter">{Math.round(monthlyInstallment).toLocaleString('en-US')}</p>
+                        <div className="flex flex-col sm:flex-row justify-between sm:items-end pb-2 gap-1">
+                          <div>
+                            <p className="text-[11px] text-[#737373] mb-1">الدفعة الشهرية المتوقعة</p>
+                            <p className="font-mono text-2xl font-bold text-[#10b981] tracking-tighter">{Math.round(monthlyInstallment).toLocaleString('en-US')}</p>
+                          </div>
                         </div>
                       </div>
                     </div>
+
+                    {/* Live Amortization / Mini Schedule Preview */}
+                    {schedule.length > 0 && (
+                      <div className="mt-4 pt-4 border-t border-[#10b981]/10 text-right">
+                        <p className="text-[10px] text-[#737373] font-bold mb-2">جدول الاستحقاق المبدئي الفوري:</p>
+                        <div className="max-h-28 overflow-y-auto pr-1 border border-[#10b981]/10 rounded bg-[#0f0f0f]/60">
+                          <table className="w-full text-right text-[11px]">
+                            <thead className="bg-[#141414] text-[#737373] sticky top-0 border-b border-[#10b981]/10">
+                              <tr>
+                                <th className="p-1.5 font-normal font-sans">#</th>
+                                <th className="p-1.5 font-normal font-sans">التاريخ</th>
+                                <th className="p-1.5 font-normal font-sans">المبلغ</th>
+                              </tr>
+                            </thead>
+                            <tbody className="font-mono text-[#ededed]">
+                              {schedule.map((sch, i) => (
+                                <tr key={i} className="border-b border-[#262626]/40 last:border-0 hover:bg-[#1a1a1a]">
+                                  <td className="p-1.5 text-[#737373]">#{sch.installmentNumber}</td>
+                                  <td className="p-1.5">{new Date(sch.dueDate).toLocaleDateString('ar-IQ')}</td>
+                                  <td className="p-1.5 text-[#10b981] font-bold">{Math.round(sch.amount).toLocaleString()}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 

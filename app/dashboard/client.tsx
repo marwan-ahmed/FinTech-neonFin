@@ -256,41 +256,43 @@ export default function DashboardClient() {
 
       {/* Left Column: KPI Metrics */}
       <section className="col-span-12 flex flex-col gap-6 lg:col-span-3">
-        <div className="flex flex-col gap-1 rounded-lg border border-[#262626] bg-[#141414] p-5 relative overflow-hidden">
-          <span className="text-[10px] uppercase tracking-[0.2em] text-[#737373]">
+        <div className="flex flex-col gap-1 rounded-lg border border-[#262626] bg-[#141414] p-5 relative overflow-hidden transition-all duration-300 hover:border-[#10b981]/40 hover:shadow-[0_0_20px_rgba(16,185,129,0.1)] group">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-[#10b981]/5 rounded-full blur-xl group-hover:bg-[#10b981]/10 transition-all duration-300"></div>
+          <span className="text-[10px] uppercase tracking-[0.2em] text-[#737373] relative z-10">
             إجمالي رأس المال
           </span>
           <h2
-            className="font-mono text-3xl tracking-tighter text-[#ededed]"
+            className="font-mono text-3xl tracking-tighter text-[#ededed] relative z-10"
             dir="ltr"
           >
             {totalInvestorsCapital.toLocaleString("en-US")} د.ع
           </h2>
-          <div className="mt-2 flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-[#737373]"></span>
-            <span className="text-[11px] text-[#737373]">نمو 0.0%</span>
+          <div className="mt-2 flex items-center gap-2 relative z-10">
+            <span className="h-2 w-2 rounded-full bg-[#10b981] shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
+            <span className="text-[11px] text-[#10b981] font-bold">نمو مستقر ومحمي</span>
           </div>
         </div>
 
-        <div className="flex flex-col gap-1 rounded-lg border border-[#262626] bg-[#141414] p-5">
-          <span className="text-[10px] uppercase tracking-[0.2em] text-[#737373]">
+        <div className="flex flex-col gap-1 rounded-lg border border-[#262626] bg-[#141414] p-5 transition-all duration-300 hover:border-blue-500/40 hover:shadow-[0_0_20px_rgba(59,130,246,0.1)] relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-xl group-hover:bg-blue-500/10 transition-all duration-300"></div>
+          <span className="text-[10px] uppercase tracking-[0.2em] text-[#737373] relative z-10">
             المدفوعات النشطة (رأس المال كقروض)
           </span>
           <h2
-            className="font-mono text-3xl tracking-tighter text-[#ededed]"
+            className="font-mono text-3xl tracking-tighter text-[#ededed] relative z-10"
             dir="ltr"
           >
             {activeDisbursements.toLocaleString("en-US")} د.ع
           </h2>
-          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[#262626]">
+          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[#262626] relative z-10">
             <div
-              className="h-full bg-[#10b981]"
+              className="h-full bg-blue-500 transition-all duration-500"
               style={{
                 width: `${totalInvestorsCapital > 0 ? Math.min(100, (activeDisbursements / totalInvestorsCapital) * 100) : 0}%`,
               }}
             ></div>
           </div>
-          <span className="mt-1 text-[10px] text-[#737373]">
+          <span className="mt-1 text-[10px] text-[#737373] relative z-10">
             معدل الاستخدام{" "}
             {totalInvestorsCapital > 0
               ? Math.round((activeDisbursements / totalInvestorsCapital) * 100)
@@ -299,37 +301,39 @@ export default function DashboardClient() {
           </span>
         </div>
 
-        <div className="flex flex-col gap-1 rounded-lg border border-[#262626] bg-[#141414] p-5">
-          <span className="text-[10px] uppercase tracking-[0.2em] text-[#737373]">
+        <div className="flex flex-col gap-1 rounded-lg border border-[#262626] bg-[#141414] p-5 transition-all duration-300 hover:border-orange-500/30 hover:shadow-[0_0_20px_rgba(249,115,22,0.08)] relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-orange-500/5 rounded-full blur-xl group-hover:bg-orange-500/10 transition-all duration-300"></div>
+          <span className="text-[10px] uppercase tracking-[0.2em] text-[#737373] relative z-10">
             إجمالي الديون (المطلوبة للتسديد)
           </span>
           <h2
-            className="font-mono text-2xl tracking-tighter text-[#ededed]"
+            className="font-mono text-2xl tracking-tighter text-[#ededed] relative z-10"
             dir="ltr"
           >
             {totalDebt.toLocaleString("en-US")} د.ع
           </h2>
         </div>
 
-        <div className="flex flex-col gap-1 rounded-lg border border-[#262626] bg-[#141414] p-5">
-          <span className="text-[10px] uppercase tracking-[0.2em] text-[#737373]">
+        <div className="flex flex-col gap-1 rounded-lg border border-[#262626] bg-[#141414] p-5 transition-all duration-300 hover:border-[#10b981]/40 hover:shadow-[0_0_20px_rgba(16,185,129,0.12)] relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-[#10b981]/5 rounded-full blur-xl group-hover:bg-[#10b981]/10 transition-all duration-300"></div>
+          <span className="text-[10px] uppercase tracking-[0.2em] text-[#737373] relative z-10">
             إجمالي المبالغ المسددة
           </span>
           <h2
-            className="font-mono text-2xl tracking-tighter text-[#10b981]"
+            className="font-mono text-2xl tracking-tighter text-[#10b981] relative z-10"
             dir="ltr"
           >
             {totalPaid.toLocaleString("en-US")} د.ع
           </h2>
-          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[#262626]">
+          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[#262626] relative z-10">
             <div
-              className="h-full bg-[#10b981]"
+              className="h-full bg-[#10b981] transition-all duration-500"
               style={{
                 width: `${totalDebt > 0 ? Math.min(100, (totalPaid / totalDebt) * 100) : 0}%`,
               }}
             ></div>
           </div>
-          <span className="mt-1 text-[10px] text-[#737373]">
+          <span className="mt-1 text-[10px] text-[#737373] relative z-10">
             نسبة التسديد الكلية:{" "}
             {totalDebt > 0
               ? Math.round((totalPaid / totalDebt) * 100)
@@ -338,19 +342,20 @@ export default function DashboardClient() {
           </span>
         </div>
 
-        <div className="flex flex-col gap-1 rounded-lg border border-[#262626] bg-[#141414] p-5">
-          <span className="text-[10px] uppercase tracking-[0.2em] text-[#737373]">
+        <div className="flex flex-col gap-1 rounded-lg border border-[#262626] bg-[#141414] p-5 transition-all duration-300 hover:border-[#f59e0b]/40 hover:shadow-[0_0_20px_rgba(245,158,11,0.1)] relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-[#f59e0b]/5 rounded-full blur-xl group-hover:bg-[#f59e0b]/10 transition-all duration-300"></div>
+          <span className="text-[10px] uppercase tracking-[0.2em] text-[#737373] relative z-10">
             المبالغ المتبقية غير المسددة
           </span>
           <h2
-            className="font-mono text-2xl tracking-tighter text-[#f59e0b]"
+            className="font-mono text-2xl tracking-tighter text-[#f59e0b] relative z-10"
             dir="ltr"
           >
             {outstandingDebt.toLocaleString("en-US")} د.ع
           </h2>
         </div>
 
-        <div className="flex flex-col gap-1 rounded-lg border border-[#262626] bg-[#141414] p-5">
+        <div className="flex flex-col gap-1 rounded-lg border border-[#262626] bg-[#141414] p-5 transition-all duration-300 hover:border-[#737373]/50 relative overflow-hidden group">
           <span className="text-[10px] uppercase tracking-[0.2em] text-[#737373]">
             مؤشر التعرض للمخاطر
           </span>
@@ -365,7 +370,7 @@ export default function DashboardClient() {
         <div className="mt-auto flex flex-col gap-3 pt-4">
           <button
             onClick={() => setShowLoanModal(true)}
-            className="flex justify-center items-center gap-2 w-full rounded bg-[#10b981] py-4 text-sm font-bold text-black transition-colors hover:bg-[#34d399]"
+            className="flex justify-center items-center gap-2 w-full rounded bg-[#10b981] py-4 text-sm font-bold text-black transition-colors hover:bg-[#34d399] shadow-[0_4px_15px_rgba(16,185,129,0.2)]"
           >
             <Plus size={18} />
             تسهيلات ائتمانية جديدة
@@ -551,25 +556,55 @@ export default function DashboardClient() {
                     new Date(l.nextDue).getTime() - now < 7 * 86400000 &&
                     l.status === "active",
                 )
-                .map((loan: any, i: number) => (
-                  <div
-                    key={i}
-                    className="flex items-start gap-3 rounded border border-orange-500/30 bg-orange-500/10 p-3"
-                  >
-                    <div className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-orange-500"></div>
-                    <div>
-                      <p className="text-[11px] font-bold text-orange-400">
-                        استحقاق سداد قريب
-                      </p>
-                      <p className="text-[10px] text-orange-400/80 mt-0.5">
-                        القرض الخاص بـ {loan.borrowerId} مستحق بتاريخ{" "}
-                        {new Date(loan.nextDue).toLocaleDateString("ar-IQ")}{" "}
-                        بقيمة {(loan.totalDebt / loan.tenure).toLocaleString()}{" "}
-                        د.ع.
-                      </p>
+                .map((loan: any, i: number) => {
+                  const installmentAmount = Math.round(loan.totalDebt / (loan.tenure || 1));
+                  const borrowerDisplay = loan.borrowerName || loan.borrowerId || 'غير معروف';
+                  const nextSch = loan.schedule?.find((s: any) => s.status === 'pending');
+                  const instNum = nextSch ? nextSch.installmentNumber : 1;
+
+                  return (
+                    <div
+                      key={i}
+                      className="flex flex-col gap-2.5 rounded-lg border border-orange-500/30 bg-orange-500/10 p-3.5 transition-all duration-300 hover:border-orange-500/60 hover:shadow-[0_0_15px_rgba(249,115,22,0.15)]"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,1)] animate-pulse"></div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <p className="text-[11px] font-bold text-orange-400">
+                              استحقاق سداد قريب (قسط #{instNum})
+                            </p>
+                            <span className="text-[9px] font-mono text-orange-400/70 bg-orange-500/10 px-1.5 py-0.5 rounded border border-orange-500/20">
+                              {new Date(loan.nextDue).toLocaleDateString("ar-IQ")}
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-orange-400/90 mt-1 leading-relaxed">
+                            المطلوب من الزبون <strong className="text-white font-bold">{borrowerDisplay}</strong> سداد مبلغ وقدره <span className="font-mono font-bold text-white">{installmentAmount.toLocaleString()}</span> د.ع.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Embed micro-action buttons */}
+                      <div className="flex items-center justify-end gap-2 border-t border-orange-500/20 pt-2 mt-0.5">
+                        <a
+                          href={`https://wa.me/${loan.phone?.replace(/[^0-9]/g, '') || ''}?text=${encodeURIComponent(`مرحباً السيد/ة ${borrowerDisplay}، نود تذكيركم بقرب موعد استحقاق القسط رقم #${instNum} البالغ ${installmentAmount.toLocaleString()} دينار عراقي بتاريخ ${new Date(loan.nextDue).toLocaleDateString("ar-IQ")}. شكراً لتعاونكم.`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[9px] font-bold bg-[#141414] text-[#ededed] border border-[#262626] hover:border-green-500/50 hover:text-green-400 px-2.5 py-1 rounded transition-all flex items-center gap-1"
+                        >
+                          <span className="w-1 h-1 rounded-full bg-green-500"></span>
+                          تذكير واتساب
+                        </a>
+                        <Link
+                          href={`/dashboard/loans/${loan.id}`}
+                          className="text-[9px] font-bold bg-orange-500 text-black hover:bg-orange-400 px-2.5 py-1 rounded transition-all shadow-sm font-mono flex items-center gap-1"
+                        >
+                          تسجيل الدفعة ←
+                        </Link>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
             ) : (
               <div className="flex items-start gap-3 rounded border border-[#262626] bg-[#0f0f0f] p-3">
                 <div className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-green-500"></div>

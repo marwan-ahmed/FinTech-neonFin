@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import {
   PieChart,
   Pie,
@@ -12,8 +13,10 @@ import {
   YAxis,
   CartesianGrid,
   Legend,
+  AreaChart,
+  Area,
 } from "recharts";
-import { ShieldAlert, ShieldCheck, Shield, Activity } from "lucide-react";
+import { ShieldAlert, ShieldCheck, Shield, Activity, TrendingUp } from "lucide-react";
 
 interface RiskAllocationProps {
   investors: any[];
@@ -136,6 +139,53 @@ export default function RiskAllocation({
       fill: "#ef4444",
     },
   ];
+
+  // ── 3.1: Cash Flow Forecast (next 6 months) ──────────────────────────
+  const cashFlowForecast = useMemo(() => {
+    const now = new Date();
+    const months: { month: string; expected: number; cumulative: number }[] = [];
+    let cumulative = 0;
+
+    for (let m = 0; m < 6; m++) {
+      const start = new Date(now.getFullYear(), now.getMonth() + m, 1);
+      const end = new Date(now.getFullYear(), now.getMonth() + m + 1, 0, 23, 59, 59);
+      const monthLabel = start.toLocaleDateString('ar-IQ', { month: 'short', year: 'numeric' });
+
+      let monthTotal = 0;
+      loans.forEach((loan: any) => {
+        if (loan.status !== 'active' && loan.status !== 'approved') return;
+        const schedule = loan.schedule || [];
+        schedule.forEach((s: any) => {
+          if (s.status === 'paid') return;
+          const due = new Date(s.dueDate);
+          if (due >= start && due <= end) {
+            const amount = parseFloat(s.amount || '0');
+            const paid = parseFloat(s.paidAmount || '0');
+            monthTotal += Math.max(0, amount - paid);
+          }
+        });
+      });
+
+      cumulative += monthTotal;
+      months.push({ month: monthLabel, expected: Math.round(monthTotal), cumulative: Math.round(cumulative) });
+    }
+    return months;
+  }, [loans]);
+
+  const hasForecastData = cashFlowForecast.some(m => m.expected > 0);
+
+  const ForecastTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-[#1a1a1a] border border-[#262626] p-3 rounded-lg shadow-xl text-sm" dir="rtl">
+          <p className="text-white font-bold mb-1">{label}</p>
+          <p className="text-[#10b981] font-mono text-xs">المتوقع: {Number(payload[0]?.value).toLocaleString()} د.ع</p>
+          {payload[1] && <p className="text-[#3b82f6] font-mono text-xs">التراكمي: {Number(payload[1]?.value).toLocaleString()} د.ع</p>}
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-6">
@@ -262,6 +312,92 @@ export default function RiskAllocation({
             </BarChart>
           </ResponsiveContainer>
         </div>
+      </div>
+
+      {/* ── 3.1: Cash Flow Forecast ───────────────────────────────────── */}
+      <div className="lg:col-span-3 bg-[#141414] border border-[#262626] rounded-lg p-5 flex flex-col">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-[#10b981]" />
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+              توقعات التدفق النقدي (6 أشهر)
+            </h3>
+          </div>
+          {hasForecastData && (
+            <span className="text-[10px] font-mono text-[#737373] bg-[#0f0f0f] border border-[#262626] px-2 py-0.5 rounded">
+              إجمالي متوقع: {cashFlowForecast[cashFlowForecast.length - 1]?.cumulative.toLocaleString()} د.ع
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-[#737373] mb-4">
+          يوضح حجم السيولة المتوقع دخولها للمحفظة بناءً على جداول استحقاق الأقساط النشطة.
+        </p>
+        {hasForecastData ? (
+          <div className="flex-1 min-h-[220px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={cashFlowForecast} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="forecastGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="cumulativeGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#262626" vertical={false} />
+                <XAxis
+                  dataKey="month"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#737373', fontSize: 10 }}
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#737373', fontSize: 10, fontFamily: 'monospace' }}
+                  tickFormatter={(v) => v > 0 ? `${(v / 1000).toFixed(0)}K` : '0'}
+                  width={50}
+                />
+                <Tooltip content={<ForecastTooltip />} />
+                <Area
+                  type="monotone"
+                  dataKey="expected"
+                  stroke="#10b981"
+                  strokeWidth={2}
+                  fill="url(#forecastGradient)"
+                  name="المتوقع شهرياً"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="cumulative"
+                  stroke="#3b82f6"
+                  strokeWidth={1.5}
+                  strokeDasharray="5 5"
+                  fill="url(#cumulativeGradient)"
+                  name="التراكمي"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        ) : (
+          <div className="flex-1 min-h-[120px] flex items-center justify-center text-[#737373] text-xs italic">
+            لا توجد أقساط مستحقة خلال الأشهر الستة القادمة.
+          </div>
+        )}
+        {hasForecastData && (
+          <div className="flex justify-around items-center mt-3 border-t border-[#262626] pt-3">
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-[2px] bg-[#10b981] rounded"></div>
+              <span className="text-[10px] text-[#737373]">الدخل الشهري المتوقع</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-[2px] bg-[#3b82f6] rounded" style={{borderTop: '2px dashed #3b82f6'}}></div>
+              <span className="text-[10px] text-[#737373]">التراكمي</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

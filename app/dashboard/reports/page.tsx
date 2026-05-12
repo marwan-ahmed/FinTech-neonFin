@@ -123,11 +123,67 @@ export default function ReportsPage() {
 
   return (
     <div className="flex h-full flex-col gap-6 pb-10">
-      <div>
-        <h2 className="text-2xl font-bold text-white tracking-tight">التقارير والإحصائيات</h2>
-        <p className="mt-1 text-sm text-[#737373]">
-          نظرة شاملة لسلامة المحفظة، المبالغ المحصلة، والأرباح المتوقعة.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-white tracking-tight">التقارير والإحصائيات</h2>
+          <p className="mt-1 text-sm text-[#737373]">
+            نظرة شاملة لسلامة المحفظة، المبالغ المحصلة، والأرباح المتوقعة.
+          </p>
+        </div>
+        <button
+          onClick={() => {
+            const reportHTML = `<html dir="rtl">
+              <head>
+                <title>تقرير أداء المحفظة - neonFin</title>
+                <style>
+                  *{margin:0;padding:0;box-sizing:border-box}
+                  body{font-family:'Segoe UI',sans-serif;color:#1a1a1a;padding:40px}
+                  .brand{text-align:center;padding-bottom:20px;border-bottom:3px solid #10b981;margin-bottom:24px}
+                  .brand h1{font-size:28px;color:#10b981;letter-spacing:2px}
+                  .brand p{color:#666;font-size:12px}
+                  .title{text-align:center;margin:16px 0;font-size:18px;font-weight:bold;color:#064e3b}
+                  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0}
+                  .card{padding:14px;border:1px solid #e5e7eb;border-radius:6px;background:#fafafa}
+                  .card label{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:2px}
+                  .card span{font-size:16px;font-weight:bold}
+                  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:12px}
+                  th{background:#f9fafb;padding:8px;border:1px solid #e5e7eb;font-size:10px;text-transform:uppercase;color:#666}
+                  td{padding:8px;border:1px solid #e5e7eb;text-align:center}
+                  .footer{margin-top:40px;text-align:center;font-size:11px;color:#999;border-top:1px dashed #ccc;padding-top:12px}
+                  @media print{body{padding:20px}}
+                </style>
+              </head>
+              <body>
+                <div class="brand"><h1>neonFin</h1><p>منصة الحلول المالية المتكاملة</p></div>
+                <div class="title">تقرير أداء المحفظة الائتمانية - ${new Date().toLocaleDateString('ar-IQ')}</div>
+                <div class="grid">
+                  <div class="card"><label>الأرباح المتوقعة</label><span style="color:#10b981">${expectedProfit.toLocaleString()} د.ع</span></div>
+                  <div class="card"><label>إجمالي المحصّل</label><span>${totalCollected.toLocaleString()} د.ع</span></div>
+                  <div class="card"><label>نسبة التحصيل</label><span>${collectionRate.toFixed(1)}%</span></div>
+                  <div class="card"><label>المحفظة في خطر</label><span style="color:#ef4444">${portfolioAtRisk.toFixed(2)}%</span></div>
+                </div>
+                <table>
+                  <thead><tr><th>المقترض</th><th>المبلغ</th><th>المديونية</th><th>الحالة</th><th>التصنيف</th></tr></thead>
+                  <tbody>${loans.map((l: any) => `<tr>
+                    <td style="font-weight:bold">${l.borrowerName}</td>
+                    <td style="font-family:monospace">${parseFloat(l.assetValue||0).toLocaleString()}</td>
+                    <td style="font-family:monospace">${parseFloat(l.totalDebt||0).toLocaleString()}</td>
+                    <td>${l.status === 'active' ? 'نشط' : l.status === 'completed' ? 'مكتمل' : 'متعثر'}</td>
+                    <td style="font-weight:bold;color:${l.score === 'C' ? '#ef4444' : l.score === 'B' ? '#f59e0b' : '#10b981'}">${l.score || 'A'}</td>
+                  </tr>`).join('')}</tbody>
+                </table>
+                <div class="footer">تم التصدير آلياً بواسطة نظام neonFin &copy; ${new Date().getFullYear()}</div>
+                <script>window.onload=()=>{window.print();}</script>
+              </body>
+            </html>`;
+            const w = window.open('', '_blank');
+            if (w) { w.document.open(); w.document.write(reportHTML); w.document.close(); }
+          }}
+          className="flex items-center gap-2 bg-[#10b981]/10 border border-[#10b981]/30 text-[#10b981] text-xs font-bold px-4 py-2.5 rounded-lg hover:bg-[#10b981]/20 transition-colors"
+        >
+          <TrendingUp size={15} />
+          <span>تصدير تقرير المحفظة</span>
+        </button>
       </div>
 
       {/* KPI Cards */}
