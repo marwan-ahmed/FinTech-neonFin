@@ -21,6 +21,55 @@ export default function KYCPage() {
     riskLevel: 'low' as 'low' | 'medium' | 'high'
   });
 
+  // Existing borrowers and investors for quick selection
+  const [existingNames, setExistingNames] = useState<{name: string, type: 'borrower' | 'investor'}[]>([]);
+  const [loadingNames, setLoadingNames] = useState(false);
+
+  const fetchExistingEntities = async () => {
+    setLoadingNames(true);
+    try {
+      const [loansRes, investorsRes] = await Promise.all([
+        fetch('/api/loans').catch(() => null),
+        fetch('/api/investors').catch(() => null)
+      ]);
+      
+      const namesList: {name: string, type: 'borrower' | 'investor'}[] = [];
+      const seen = new Set<string>();
+
+      if (loansRes?.ok) {
+        const loansData = await loansRes.json();
+        loansData.forEach((l: any) => {
+          if (l.borrowerName && !seen.has(l.borrowerName)) {
+            seen.add(l.borrowerName);
+            namesList.push({ name: l.borrowerName, type: 'borrower' });
+          }
+        });
+      }
+
+      if (investorsRes?.ok) {
+        const investorsData = await investorsRes.json();
+        investorsData.forEach((inv: any) => {
+          if (inv.name && !seen.has(inv.name)) {
+            seen.add(inv.name);
+            namesList.push({ name: inv.name, type: 'investor' });
+          }
+        });
+      }
+
+      setExistingNames(namesList);
+    } catch (err) {
+      console.error("Error fetching existing entities:", err);
+    } finally {
+      setLoadingNames(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showAddModal) {
+      fetchExistingEntities();
+    }
+  }, [showAddModal]);
+
   // Simulated Document Preview state
   const [previewDoc, setPreviewDoc] = useState<string | null>(null);
   const [previewing, setPreviewing] = useState(false);
@@ -534,15 +583,48 @@ export default function KYCPage() {
 
             <form onSubmit={handleCreateApplication} className="p-5 flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-[#737373]">اسم طالب التسهيل / المستثمر</label>
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-bold text-[#737373]">اسم طالب التسهيل / المستثمر</label>
+                  {loadingNames && <span className="text-[10px] text-[#10b981] animate-pulse">جاري جلب الأسماء المسجلة...</span>}
+                </div>
                 <input 
                   type="text" 
                   required
                   value={addForm.name}
                   onChange={e => setAddForm({...addForm, name: e.target.value})}
-                  className="rounded-lg border border-[#262626] bg-[#0f0f0f] p-2.5 text-sm text-white focus:border-[#10b981] outline-none"
+                  className="rounded-lg border border-[#262626] bg-[#0f0f0f] p-2.5 text-sm text-white focus:border-[#10b981] outline-none transition-colors"
                   placeholder="الاسم الكامل مطابقاً للوثائق الرسمية..."
                 />
+                {existingNames.length > 0 && (
+                  <div className="mt-1 flex flex-col gap-1.5 bg-[#0f0f0f] p-2.5 rounded-lg border border-[#262626]">
+                    <span className="text-[10px] text-[#737373] font-bold">اختيار سريع من المسجلين مسبقاً:</span>
+                    <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
+                      {existingNames
+                        .filter(e => !addForm.name || e.name.toLowerCase().includes(addForm.name.toLowerCase()))
+                        .map((entity, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              const defaultType = entity.type === 'investor' ? 'محفظة استثمارية' : 'قرض تجاري';
+                              setAddForm({ ...addForm, name: entity.name, type: defaultType });
+                            }}
+                            className={`text-[10px] px-2.5 py-1 rounded-md border transition-all flex items-center gap-1.5 ${
+                              addForm.name === entity.name
+                                ? 'bg-[#10b981]/20 border-[#10b981] text-[#10b981] font-bold'
+                                : entity.type === 'borrower'
+                                ? 'bg-[#141414] border-[#262626] hover:border-[#10b981]/40 text-[#ededed]'
+                                : 'bg-purple-500/5 border-[#262626] hover:border-purple-500/40 text-purple-300'
+                            }`}
+                          >
+                            <span className={`w-1.5 h-1.5 rounded-full ${entity.type === 'borrower' ? 'bg-[#10b981]' : 'bg-purple-400'}`}></span>
+                            <span>{entity.name}</span>
+                            <span className="text-[8px] opacity-60">({entity.type === 'borrower' ? 'مقترض' : 'مستثمر'})</span>
+                          </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-col gap-1.5">
