@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { investors } from '@/schema/schema';
 import { eq, and } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth';
+import { logAudit } from '@/lib/audit';
 import { z } from 'zod';
 
 const updateInvestorSchema = z.object({
@@ -15,11 +16,11 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
   const { id } = await context.params;
   try {
     const user = await getCurrentUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user || !user.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const conditions = user.role === 'superadmin' 
         ? eq(investors.id, id)
-        : and(eq(investors.id, id), eq(investors.tenantId, user.tenantId!));
+        : and(eq(investors.id, id), eq(investors.tenantId, user.tenantId));
 
     // Check if investor exists and belongs to tenant
     const existing = await db.select().from(investors).where(conditions).limit(1);
@@ -44,10 +45,19 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
       .where(conditions)
       .returning();
 
+    await logAudit({
+      tenantId: user.tenantId,
+      userId: user.id,
+      action: 'UPDATE_INVESTOR',
+      entityType: 'INVESTOR',
+      entityId: id,
+      details: updateValues
+    });
+
     return NextResponse.json(result[0]);
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: 'Failed to update investor' }, { status: 500 });
+  } catch (error: any) {
+    console.error("PATCH INVESTOR ERROR:", error);
+    return NextResponse.json({ error: 'Failed to update investor', details: error.message }, { status: 500 });
   }
 }
 
@@ -55,11 +65,11 @@ export async function DELETE(req: Request, context: { params: Promise<{ id: stri
   const { id } = await context.params;
   try {
     const user = await getCurrentUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user || !user.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const conditions = user.role === 'superadmin' 
         ? eq(investors.id, id)
-        : and(eq(investors.id, id), eq(investors.tenantId, user.tenantId!));
+        : and(eq(investors.id, id), eq(investors.tenantId, user.tenantId));
 
     // Check existence
     const existing = await db.select().from(investors).where(conditions).limit(1);
@@ -68,9 +78,19 @@ export async function DELETE(req: Request, context: { params: Promise<{ id: stri
     }
 
     await db.delete(investors).where(conditions);
+
+    await logAudit({
+      tenantId: user.tenantId,
+      userId: user.id,
+      action: 'DELETE_INVESTOR',
+      entityType: 'INVESTOR',
+      entityId: id,
+      details: { name: existing[0].name, capital: existing[0].capital }
+    });
+
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: 'Failed to delete investor' }, { status: 500 });
+  } catch (error: any) {
+    console.error("DELETE INVESTOR ERROR:", error);
+    return NextResponse.json({ error: 'Failed to delete investor', details: error.message }, { status: 500 });
   }
 }
