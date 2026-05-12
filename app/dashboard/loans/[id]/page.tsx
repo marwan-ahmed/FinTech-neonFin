@@ -2,7 +2,7 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, ArrowRight, Printer, Download, User, Info, FileText, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Loader2, ArrowRight, Printer, Download, User, Info, FileText, CheckCircle, AlertTriangle, Edit, Trash2, Save, X } from 'lucide-react';
 import Link from 'next/link';
 
 export default function LoanDetailsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -13,6 +13,17 @@ export default function LoanDetailsPage({ params }: { params: Promise<{ id: stri
   const [loan, setLoan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Edit borrower modal state
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editForm, setEditForm] = useState({
+    borrowerName: '',
+    phone: '',
+    address: '',
+    job: '',
+    status: 'active'
+  });
 
   const fetchLoan = async () => {
     try {
@@ -25,6 +36,13 @@ export default function LoanDetailsPage({ params }: { params: Promise<{ id: stri
         data.marketCardValue = parseFloat(data.marketCardValue || 0);
         data.saleCardValue = parseFloat(data.saleCardValue || 0);
         setLoan(data);
+        setEditForm({
+          borrowerName: data.borrowerName || '',
+          phone: data.phone || '',
+          address: data.address || '',
+          job: data.job || '',
+          status: data.status || 'active'
+        });
         setError(null);
       } else {
          setError("Failed to fetch loan");
@@ -92,21 +110,58 @@ export default function LoanDetailsPage({ params }: { params: Promise<{ id: stri
     }
   };
 
+  // Submit borrower info edits
+  const handleUpdateBorrower = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/loans/${loanId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editForm)
+      });
+      if (res.ok) {
+        setIsEditing(false);
+        fetchLoan();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert(errData.error || 'فشل تحديث بيانات المقترض');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('حدث خطأ أثناء التحديث');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Delete entire loan handler
+  const handleDeleteLoan = async () => {
+    if (!confirm('⚠️ تحذير شديد: هل أنت متأكد من حذف هذا القرض بالكامل مع كافة سجلات وجداول السداد الخاصة به؟ هذا الإجراء نهائي ولا يمكن التراجع عنه.')) return;
+    try {
+      const res = await fetch(`/api/loans/${loanId}`, { method: 'DELETE' });
+      if (res.ok) {
+        router.push('/dashboard/loans');
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert(errData.error || 'فشل حذف القرض');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('حدث خطأ أثناء الحذف');
+    }
+  };
+
   const printReceipt = (installment: any) => {
     if (!loan) return;
     const paidAmount = parseFloat(installment.paidAmount || '0');
     const amountDue = parseFloat(installment.amount || '0');
     const remainingAmount = Math.max(0, amountDue - paidAmount);
     
-    // Status should also consider the installment.status from the backend if possible
-    // But based on amounts:
     const isFullyPaid = installment.status === 'paid' || paidAmount >= amountDue;
     const isPartial = !isFullyPaid && paidAmount > 0;
     const isUnpaid = !isFullyPaid && !isPartial;
     
-    // For display amount on receipt:
-    // If it's a receipt for payment (full or partial), show what was paid.
-    // If it's an invoice for an unpaid installment, show what is due.
     const displayAmount = (isFullyPaid || isPartial) ? paidAmount : amountDue;
     
     const titleText = isUnpaid ? 'إشعار استحقاق نقدية' : 'وصل استلام نقدية';
@@ -229,39 +284,48 @@ export default function LoanDetailsPage({ params }: { params: Promise<{ id: stri
   }
 
   return (
-    <div className="flex flex-col gap-6 h-full pb-10 print:bg-white print:text-black min-h-screen">
+    <div className="flex flex-col gap-6 h-full pb-10 print:bg-white print:text-black min-h-screen relative">
       {/* Header - Hidden on Print */}
       <div className="flex justify-between items-center print:hidden">
         <div>
           <h2 className="text-2xl font-bold text-white tracking-tight">تفاصيل القرض</h2>
-          <p className="text-sm text-[#737373] mt-1">المعرف: {loan.id}</p>
+          <p className="text-sm text-[#737373] mt-1 font-mono">المعرف: {loan.id}</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           {loan.status !== 'completed' && (
             <button 
               onClick={handleClearLoan}
-              className="flex items-center gap-2 bg-[#ef4444]/10 border border-[#ef4444]/30 text-[#ef4444] text-sm font-bold px-4 py-2 rounded hover:bg-[#ef4444]/20 transition-colors">
-              <CheckCircle size={16} />
-              إطفاء القرض بالكامل
+              className="flex items-center gap-1.5 bg-[#ef4444]/10 border border-[#ef4444]/30 text-[#ef4444] text-xs font-bold px-3 py-2 rounded-lg hover:bg-[#ef4444]/20 transition-colors">
+              <CheckCircle size={15} />
+              <span>إطفاء بالكامل</span>
             </button>
           )}
           <button 
             onClick={exportCSV}
-            className="flex items-center gap-2 bg-[#0f0f0f] border border-[#262626] text-white text-sm font-bold px-4 py-2 rounded hover:bg-[#1a1a1a] transition-colors">
-            <Download size={16} />
-            تصدير CSV
+            className="flex items-center gap-1.5 bg-[#0f0f0f] border border-[#262626] text-white text-xs font-bold px-3 py-2 rounded-lg hover:bg-[#1a1a1a] transition-colors">
+            <Download size={15} />
+            <span>تصدير CSV</span>
           </button>
           <button 
             onClick={handlePrint}
-            className="flex items-center gap-2 bg-[#10b981] text-black text-sm font-bold px-4 py-2 rounded hover:bg-[#34d399] transition-colors">
-            <Printer size={16} />
-            طباعة
+            className="flex items-center gap-1.5 bg-[#10b981] text-black text-xs font-bold px-3 py-2 rounded-lg hover:bg-[#34d399] transition-colors">
+            <Printer size={15} />
+            <span>طباعة</span>
           </button>
+          
+          {/* Delete Action Button */}
+          <button 
+            onClick={handleDeleteLoan}
+            className="flex items-center gap-1.5 bg-red-500/10 border border-red-500/30 text-red-400 hover:text-white hover:bg-red-600 text-xs font-bold px-3 py-2 rounded-lg transition-all duration-200 mr-2">
+            <Trash2 size={15} />
+            <span>حذف القرض</span>
+          </button>
+
           <Link 
             href="/dashboard/loans" 
-            className="flex items-center gap-2 text-white text-sm font-bold px-4 py-2 hover:text-[#737373] transition-colors ml-4">
-            <ArrowRight size={16} />
-            رجوع
+            className="flex items-center gap-1.5 text-white text-xs font-bold px-3 py-2 hover:text-[#737373] transition-colors mr-2 border border-transparent">
+            <ArrowRight size={15} />
+            <span>رجوع</span>
           </Link>
         </div>
       </div>
@@ -274,10 +338,19 @@ export default function LoanDetailsPage({ params }: { params: Promise<{ id: stri
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Borrower Info Card */}
-        <div className="bg-gradient-to-br from-[#141414] to-[#1a1a1a] print:bg-white border border-[#262626] hover:border-[#10b981]/30 print:border-gray-200 rounded-xl p-6 transition-all duration-300 shadow-xl">
-          <div className="flex items-center gap-2 mb-6 border-b border-[#262626] print:border-gray-200 pb-3">
-            <User size={18} className="text-[#10b981] print:text-black" />
-            <h3 className="text-lg font-bold text-white print:text-black">بيانات الزبون</h3>
+        <div className="bg-gradient-to-br from-[#141414] to-[#1a1a1a] print:bg-white border border-[#262626] hover:border-[#10b981]/30 print:border-gray-200 rounded-xl p-6 transition-all duration-300 shadow-xl relative group">
+          <div className="flex items-center justify-between mb-6 border-b border-[#262626] print:border-gray-200 pb-3">
+            <div className="flex items-center gap-2">
+              <User size={18} className="text-[#10b981] print:text-black" />
+              <h3 className="text-lg font-bold text-white print:text-black">بيانات الزبون</h3>
+            </div>
+            <button
+              onClick={() => setIsEditing(true)}
+              className="flex items-center gap-1 text-xs text-[#10b981] bg-[#10b981]/10 px-2.5 py-1 rounded-md border border-[#10b981]/20 hover:bg-[#10b981]/20 transition-colors print:hidden"
+            >
+              <Edit size={13} />
+              <span>تعديل</span>
+            </button>
           </div>
           <div className="space-y-4">
             <div>
@@ -412,6 +485,96 @@ export default function LoanDetailsPage({ params }: { params: Promise<{ id: stri
          <div>توقيع الزبون: .......................................</div>
          <div>توقيع وتفويض الموظف: .......................................</div>
       </div>
+
+      {/* Edit Borrower Info Modal */}
+      {isEditing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
+          <div className="bg-[#141414] border border-[#262626] rounded-xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col">
+            <div className="flex justify-between items-center p-5 border-b border-[#262626] bg-[#0f0f0f]">
+              <h3 className="font-bold text-white text-base">تعديل بيانات المقترض</h3>
+              <button onClick={() => setIsEditing(false)} className="text-[#737373] hover:text-white transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleUpdateBorrower} className="p-5 flex flex-col gap-4 max-h-[80vh] overflow-y-auto">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-[#737373]">الاسم الكامل</label>
+                <input 
+                  type="text" 
+                  required
+                  value={editForm.borrowerName} 
+                  onChange={e => setEditForm({...editForm, borrowerName: e.target.value})}
+                  className="rounded border border-[#262626] bg-[#0f0f0f] p-2.5 text-sm text-white focus:border-[#10b981] outline-none"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-[#737373]">رقم الهاتف</label>
+                <input 
+                  type="text" 
+                  value={editForm.phone} 
+                  onChange={e => setEditForm({...editForm, phone: e.target.value})}
+                  className="rounded border border-[#262626] bg-[#0f0f0f] p-2.5 text-sm text-white font-mono text-right focus:border-[#10b981] outline-none"
+                  dir="ltr"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-[#737373]">العنوان السكني</label>
+                <input 
+                  type="text" 
+                  value={editForm.address} 
+                  onChange={e => setEditForm({...editForm, address: e.target.value})}
+                  className="rounded border border-[#262626] bg-[#0f0f0f] p-2.5 text-sm text-white focus:border-[#10b981] outline-none"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-[#737373]">المهنة / العمل</label>
+                <input 
+                  type="text" 
+                  value={editForm.job} 
+                  onChange={e => setEditForm({...editForm, job: e.target.value})}
+                  className="rounded border border-[#262626] bg-[#0f0f0f] p-2.5 text-sm text-white focus:border-[#10b981] outline-none"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-[#737373]">حالة القرض العامة</label>
+                <select
+                  value={editForm.status}
+                  onChange={e => setEditForm({...editForm, status: e.target.value as any})}
+                  className="rounded border border-[#262626] bg-[#0f0f0f] p-2.5 text-sm text-white focus:border-[#10b981] outline-none"
+                >
+                  <option value="active">نشط</option>
+                  <option value="completed">مكتمل</option>
+                  <option value="defaulted">متعثر / متأخر</option>
+                  <option value="pending">قيد الانتظار</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-3 mt-3 pt-3 border-t border-[#262626]">
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(false)}
+                  className="flex-1 py-2 rounded bg-transparent border border-[#262626] text-white font-bold text-xs hover:bg-[#1a1a1a]"
+                >
+                  إلغاء
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex-1 py-2 rounded bg-[#10b981] text-black font-bold text-xs hover:bg-[#34d399] flex justify-center items-center gap-1 disabled:opacity-50"
+                >
+                  {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                  <span>حفظ التعديلات</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
