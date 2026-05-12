@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { kycApplications } from '@/schema/schema';
 import { desc, eq } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth';
+import { logAudit } from '@/lib/audit';
 import { z } from 'zod';
 
 const kycSchema = z.object({
@@ -60,6 +61,16 @@ export async function POST(req: Request) {
       createdAt: new Date(),
     }).returning();
     
+    // 🔒 تسجيل إنشاء الطلب في سجلات التدقيق (Audit Logs)
+    await logAudit({
+      tenantId: user.tenantId,
+      userId: user.id,
+      action: 'CREATE_KYC_APPLICATION',
+      entityType: 'KYC_APPLICATION',
+      entityId: result[0].id,
+      details: { name: data.name, type: data.type, riskLevel: data.riskLevel }
+    });
+
     return NextResponse.json(result[0]);
   } catch (error) {
     console.error(error);

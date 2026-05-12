@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { kycApplications } from '@/schema/schema';
 import { eq, and } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth';
+import { logAudit } from '@/lib/audit';
 import { z } from 'zod';
 
 const updateKycSchema = z.object({
@@ -13,7 +14,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
   const { id } = await context.params;
   try {
     const user = await getCurrentUser();
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user || !user.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const rawBody = await req.json();
     
@@ -26,20 +27,31 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
 
     const conditions = user.role === 'superadmin' 
         ? eq(kycApplications.id, id)
-        : and(eq(kycApplications.id, id), eq(kycApplications.tenantId, user.tenantId!));
+        : and(eq(kycApplications.id, id), eq(kycApplications.tenantId, user.tenantId));
+
+    const existing = await db.select().from(kycApplications).where(conditions).limit(1);
+    if (existing.length === 0) {
+      return NextResponse.json({ error: 'Application not found' }, { status: 404 });
+    }
 
     const result = await db.update(kycApplications)
                           .set({ status })
                           .where(conditions)
                           .returning();
 
-    if (result.length === 0) {
-      return NextResponse.json({ error: 'Application not found' }, { status: 404 });
-    }
+    // 🔒 تسجيل العملية أمنياً في سجلات التدقيق (Audit Logs)
+    await logAudit({
+      tenantId: user.tenantId,
+      userId: user.id,
+      action: status === 'approved' ? 'APPROVE_KYC_DOCS' : 'REJECT_KYC_DOCS',
+      entityType: 'KYC_APPLICATION',
+      entityId: id,
+      details: { name: existing[0].name, type: existing[0].type, updatedStatus: status }
+    });
     
     return NextResponse.json(result[0]);
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: 'Failed to update KYC application' }, { status: 500 });
+  } catch (error: any) {
+    console.error("PATCH KYC ERROR:", error);
+    return NextResponse.json({ error: 'Failed to update KYC application', details: error.message }, { status: 500 });
   }
 }
