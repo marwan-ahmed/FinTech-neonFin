@@ -178,8 +178,8 @@ export default function DashboardClient() {
   const hour = new Date().getHours();
   const greetingText = hour < 12 ? 'صباح الخير' : hour < 17 ? 'مساء النور' : 'مساء الخير';
 
-  const now = new Date();
-  const weekEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7);
+  const currentDate = new Date();
+  const weekEnd = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() + 7);
   let weeklyDueCount = 0;
   let weeklyDueAmount = 0;
   loans.forEach((loan: any) => {
@@ -187,7 +187,7 @@ export default function DashboardClient() {
     loan.schedule.forEach((s: any) => {
       if (s.status === 'paid') return;
       const due = new Date(s.dueDate);
-      if (due >= now && due <= weekEnd) {
+      if (due >= currentDate && due <= weekEnd) {
         weeklyDueCount++;
         const amt = parseFloat(s.amount || '0');
         const paid = parseFloat(s.paidAmount || '0');
