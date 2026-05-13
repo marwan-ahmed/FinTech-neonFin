@@ -75,15 +75,6 @@ export default function TenantsTable({ tenants }: { tenants: TenantRow[] }) {
     setPage(1);
   }
 
-  function SortIcon({ col }: { col: SortKey }) {
-    if (sortKey !== col) return <ChevronsUpDown className="h-3.5 w-3.5 opacity-30" />;
-    return sortDir === 'asc' ? (
-      <ChevronUp className="h-3.5 w-3.5 text-red-400" />
-    ) : (
-      <ChevronDown className="h-3.5 w-3.5 text-red-400" />
-    );
-  }
-
   async function copyId(id: string) {
     try {
       await navigator.clipboard.writeText(id);
@@ -126,28 +117,28 @@ export default function TenantsTable({ tenants }: { tenants: TenantRow[] }) {
             <tr>
               <th className="px-6 py-4 font-semibold">
                 <button onClick={() => toggleSort('name')} className="flex items-center gap-1.5 hover:text-white transition-colors">
-                  Tenant Name <SortIcon col="name" />
+                  Tenant Name <SortIcon col="name" activeKey={sortKey} direction={sortDir} />
                 </button>
               </th>
               <th className="px-6 py-4 font-semibold">Tenant ID</th>
               <th className="px-6 py-4 font-semibold">
                 <button onClick={() => toggleSort('usersCount')} className="flex items-center gap-1.5 hover:text-white transition-colors">
-                  Users <SortIcon col="usersCount" />
+                  Users <SortIcon col="usersCount" activeKey={sortKey} direction={sortDir} />
                 </button>
               </th>
               <th className="px-6 py-4 font-semibold">
                 <button onClick={() => toggleSort('loansCount')} className="flex items-center gap-1.5 hover:text-white transition-colors">
-                  Loans <SortIcon col="loansCount" />
+                  Loans <SortIcon col="loansCount" activeKey={sortKey} direction={sortDir} />
                 </button>
               </th>
               <th className="px-6 py-4 font-semibold">
                 <button onClick={() => toggleSort('totalCapital')} className="flex items-center gap-1.5 hover:text-white transition-colors">
-                  Capital <SortIcon col="totalCapital" />
+                  Capital <SortIcon col="totalCapital" activeKey={sortKey} direction={sortDir} />
                 </button>
               </th>
               <th className="px-6 py-4 font-semibold">
                 <button onClick={() => toggleSort('createdAt')} className="flex items-center gap-1.5 hover:text-white transition-colors">
-                  Created <SortIcon col="createdAt" />
+                  Created <SortIcon col="createdAt" activeKey={sortKey} direction={sortDir} />
                 </button>
               </th>
               <th className="px-6 py-4 font-semibold text-right">Actions</th>
@@ -291,5 +282,14 @@ export default function TenantsTable({ tenants }: { tenants: TenantRow[] }) {
         </div>
       )}
     </div>
+  );
+}
+
+function SortIcon({ col, activeKey, direction }: { col: SortKey; activeKey: SortKey; direction: SortDir }) {
+  if (activeKey !== col) return <ChevronsUpDown className="h-3.5 w-3.5 opacity-30" />;
+  return direction === 'asc' ? (
+    <ChevronUp className="h-3.5 w-3.5 text-red-400" />
+  ) : (
+    <ChevronDown className="h-3.5 w-3.5 text-red-400" />
   );
 }

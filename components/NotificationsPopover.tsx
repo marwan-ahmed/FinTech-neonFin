@@ -8,72 +8,85 @@ export default function NotificationsPopover() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [dismissedIds, setDismissedIds] = useState<string[]>([]);
-  const popoverRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    // Load dismissed notifications from localStorage
-    const saved = localStorage.getItem("neonfin_dismissed_notifications");
-    if (saved) {
-      setDismissedIds(JSON.parse(saved));
+  const [dismissedIds, setDismissedIds] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("neonfin_dismissed_notifications");
+      try {
+        return saved ? JSON.parse(saved) : [];
+      } catch (e) {
+        return [];
+      }
     }
-  }, []);
+    return [];
+  });
+  const popoverRef = useRef<HTMLDivElement>(null);
 
   const saveDismissed = (ids: string[]) => {
     setDismissedIds(ids);
-    localStorage.setItem("neonfin_dismissed_notifications", JSON.stringify(ids));
-  };
-
-  const fetchLateInstallments = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch("/api/loans");
-      if (!res.ok) throw new Error("Failed to fetch");
-      const data = await res.json();
-      
-      const lateList: any[] = [];
-      data.forEach((loan: any) => {
-        if (loan.schedule && Array.isArray(loan.schedule)) {
-          loan.schedule.forEach((installment: any) => {
-            const dueDate = new Date(installment.dueDate);
-            const now = new Date();
-            // If it's pending, due in the past, and we haven't paid it fully
-            const paidAmount = parseFloat(installment.paidAmount || '0');
-            const amountDue = parseFloat(installment.amount || '0');
-            const isFullyPaid = installment.status === 'paid' || paidAmount >= amountDue;
-            
-            if (!isFullyPaid && dueDate < now) {
-              const remainingAmount = Math.max(0, amountDue - paidAmount);
-              lateList.push({
-                id: `${loan.id}-${installment.installmentNumber}`,
-                loanId: loan.id,
-                borrowerName: loan.borrowerName,
-                installmentNumber: installment.installmentNumber,
-                dueDate: installment.dueDate,
-                remainingAmount,
-                isPartial: paidAmount > 0
-              });
-            }
-          });
-        }
-      });
-      
-      // Sort by due date (oldest first)
-      lateList.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
-      
-      setNotifications(lateList);
-    } catch (err) {
-      console.error("Error fetching notifications", err);
-    } finally {
-      setLoading(false);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("neonfin_dismissed_notifications", JSON.stringify(ids));
     }
   };
 
   useEffect(() => {
+    let active = true;
+
+    const fetchLateInstallments = async () => {
+      try {
+        const res = await fetch("/api/loans");
+        if (!res.ok) throw new Error("Failed to fetch");
+        const data = await res.json();
+        
+        const lateList: any[] = [];
+        data.forEach((loan: any) => {
+          if (loan.schedule && Array.isArray(loan.schedule)) {
+            loan.schedule.forEach((installment: any) => {
+              const dueDate = new Date(installment.dueDate);
+              const now = new Date();
+              // If it's pending, due in the past, and we haven't paid it fully
+              const paidAmount = parseFloat(installment.paidAmount || '0');
+              const amountDue = parseFloat(installment.amount || '0');
+              const isFullyPaid = installment.status === 'paid' || paidAmount >= amountDue;
+              
+              if (!isFullyPaid && dueDate < now) {
+                const remainingAmount = Math.max(0, amountDue - paidAmount);
+                lateList.push({
+                  id: `${loan.id}-${installment.installmentNumber}`,
+                  loanId: loan.id,
+                  borrowerName: loan.borrowerName,
+                  installmentNumber: installment.installmentNumber,
+                  dueDate: installment.dueDate,
+                  remainingAmount,
+                  isPartial: paidAmount > 0
+                });
+              }
+            });
+          }
+        });
+        
+        // Sort by due date (oldest first)
+        lateList.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+        
+        if (active) {
+          setNotifications(lateList);
+        }
+      } catch (err) {
+        console.error("Error fetching notifications", err);
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+
     fetchLateInstallments();
     // Re-fetch every 1 minute
     const interval = setInterval(fetchLateInstallments, 60000);
-    return () => clearInterval(interval);
+    
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
   }, []);
 
   // Close popover when clicking outside

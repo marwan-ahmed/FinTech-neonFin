@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { investors } from '@/schema/schema';
 import { desc, eq } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth';
+import { logAudit } from '@/lib/audit';
 import { z } from 'zod';
 
 const investorSchema = z.object({
@@ -59,6 +60,16 @@ export async function POST(req: Request) {
       createdAt: new Date(),
       updatedAt: new Date()
     }).returning();
+
+    // Audit log
+    await logAudit({
+      tenantId: user.tenantId,
+      userId: user.id,
+      action: 'CREATE_INVESTOR',
+      entityType: 'INVESTOR',
+      entityId: result[0].id,
+      details: { name: data.name, capital: data.capital, type: data.type }
+    });
     
     return NextResponse.json(result[0]);
   } catch (error) {

@@ -109,8 +109,12 @@ export async function DELETE(req: Request, context: { params: Promise<{ id: stri
       return NextResponse.json({ error: 'Loan not found' }, { status: 404 });
     }
 
-    // 1. Delete associated schedules first to prevent foreign key errors
-    await db.delete(loanSchedules).where(eq(loanSchedules.loanId, id));
+    // 1. Delete associated schedules first to prevent foreign key errors (with Defense-in-Depth validation)
+    const scheduleConditions = user.role === 'superadmin'
+        ? eq(loanSchedules.loanId, id)
+        : and(eq(loanSchedules.loanId, id), eq(loanSchedules.tenantId, user.tenantId));
+        
+    await db.delete(loanSchedules).where(scheduleConditions);
 
     // 2. Delete the primary loan record
     await db.delete(loans).where(conditions);

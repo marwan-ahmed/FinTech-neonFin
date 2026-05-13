@@ -15,10 +15,6 @@ interface CommandItem {
 
 export default function CommandPalette() {
   const [isOpen, setIsOpen] = useState(false);
-  const [query, setQuery] = useState('');
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const router = useRouter();
 
   // فتح/إغلاق بـ Ctrl+K
   useEffect(() => {
@@ -33,19 +29,26 @@ export default function CommandPalette() {
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
+  if (!isOpen) return null;
+
+  return <CommandPaletteModal onClose={() => setIsOpen(false)} />;
+}
+
+function CommandPaletteModal({ onClose }: { onClose: () => void }) {
+  const [query, setQuery] = useState('');
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+
   // تركيز تلقائي عند الفتح
   useEffect(() => {
-    if (isOpen) {
-      setQuery('');
-      setSelectedIndex(0);
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
-  }, [isOpen]);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }, []);
 
   const navigate = useCallback((path: string) => {
-    setIsOpen(false);
+    onClose();
     router.push(path);
-  }, [router]);
+  }, [router, onClose]);
 
   // قائمة الأوامر المتاحة
   const commands: CommandItem[] = [
@@ -80,14 +83,12 @@ export default function CommandPalette() {
     }
   };
 
-  if (!isOpen) return null;
-
   return (
     <>
       {/* خلفية */}
       <div
         className="fixed inset-0 z-[300] bg-black/60 backdrop-blur-sm animate-fade-in"
-        onClick={() => setIsOpen(false)}
+        onClick={onClose}
       />
 
       {/* نافذة الأوامر */}

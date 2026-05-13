@@ -4,6 +4,13 @@ import { users } from '@/schema/schema';
 import { eq } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth';
 
+import { z } from 'zod';
+
+const profileSchema = z.object({
+  fullName: z.string().max(100, 'يجب ألا يتجاوز الاسم الكامل 100 حرف').optional().nullable(),
+  phoneNumber: z.string().max(20, 'يجب ألا يتجاوز رقم الهاتف 20 حرفاً').optional().nullable(),
+});
+
 export async function PUT(request: Request) {
   try {
     const user = await getCurrentUser();
@@ -12,12 +19,20 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    const { fullName, phoneNumber } = body;
+    
+    // Validate input using Zod
+    const validation = profileSchema.safeParse(body);
+    if (!validation.success) {
+      const firstError = validation.error.issues[0]?.message || 'المدخلات غير صالحة';
+      return NextResponse.json({ error: firstError }, { status: 400 });
+    }
+
+    const { fullName, phoneNumber } = validation.data;
 
     const updatedUser = await db.update(users)
       .set({
-        fullName: fullName ?? user.fullName,
-        phoneNumber: phoneNumber ?? user.phoneNumber,
+        fullName: fullName !== undefined ? fullName : user.fullName,
+        phoneNumber: phoneNumber !== undefined ? phoneNumber : user.phoneNumber,
         updatedAt: new Date()
       })
       .where(eq(users.id, user.id))
