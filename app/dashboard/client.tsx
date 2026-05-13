@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, Plus, X } from "lucide-react";
+import { Loader2, Plus, X, Wallet } from "lucide-react";
 import RiskAllocation from "./investments/RiskAllocation";
 import NewLoanModal from "@/components/NewLoanModal";
 
@@ -174,8 +174,54 @@ export default function DashboardClient() {
       : 0;
   const retailPercent = totalInvestorsCapital > 0 ? 100 - instPercent : 0;
 
+  // ── 7.2: تحية ذكية + ملخص أسبوعي ──────────────────────────
+  const hour = new Date().getHours();
+  const greetingText = hour < 12 ? 'صباح الخير' : hour < 17 ? 'مساء النور' : 'مساء الخير';
+
+  const now = new Date();
+  const weekEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7);
+  let weeklyDueCount = 0;
+  let weeklyDueAmount = 0;
+  loans.forEach((loan: any) => {
+    if (!loan.schedule || !Array.isArray(loan.schedule)) return;
+    loan.schedule.forEach((s: any) => {
+      if (s.status === 'paid') return;
+      const due = new Date(s.dueDate);
+      if (due >= now && due <= weekEnd) {
+        weeklyDueCount++;
+        const amt = parseFloat(s.amount || '0');
+        const paid = parseFloat(s.paidAmount || '0');
+        weeklyDueAmount += Math.max(0, amt - paid);
+      }
+    });
+  });
+
   return (
-    <div className="grid h-full grid-cols-12 gap-6 pb-10 relative">
+    <div className="flex flex-col gap-6 pb-10 relative">
+      {/* ── 7.2: ترحيب ذكي + ملخص ── */}
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 animate-fade-in-up">
+        <div>
+          <h1 className="text-xl lg:text-2xl font-bold text-white tracking-tight">
+            {greetingText} 👋
+          </h1>
+          <p className="text-xs text-[#737373] mt-1">
+            {new Date().toLocaleDateString('ar-IQ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          </p>
+        </div>
+        {weeklyDueCount > 0 && (
+          <div className="flex items-center gap-2 bg-[#f59e0b]/10 border border-[#f59e0b]/20 rounded-lg px-4 py-2 animate-fade-in-down">
+            <div className="h-2 w-2 rounded-full bg-[#f59e0b] animate-pulse" />
+            <span className="text-xs font-bold text-[#f59e0b]">
+              {weeklyDueCount} قسط مستحق هذا الأسبوع
+            </span>
+            <span className="text-[10px] font-mono text-[#737373]" dir="ltr">
+              ({Math.round(weeklyDueAmount).toLocaleString()} د.ع)
+            </span>
+          </div>
+        )}
+      </div>
+
+      <div className="grid h-full grid-cols-12 gap-6">
       {/* Modals */}
       {showLoanModal && (
         <NewLoanModal 
@@ -440,15 +486,22 @@ export default function DashboardClient() {
                 </tr>
               ) : loans.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-16 text-center text-[#737373]">
-                    <div className="flex flex-col items-center justify-center gap-4">
-                      <p>لا توجد قروض مسجلة بعد.</p>
+                  <td colSpan={5} className="p-16 text-center">
+                    <div className="flex flex-col items-center justify-center gap-4 animate-fade-in-up">
+                      <div className="relative">
+                        <div className="h-14 w-14 rounded-2xl bg-[#10b981]/10 flex items-center justify-center border border-[#10b981]/20">
+                          <Wallet size={24} className="text-[#10b981]" />
+                        </div>
+                        <div className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-[#10b981]/30 animate-ping" />
+                      </div>
+                      <p className="text-sm font-bold text-[#ededed]">محفظة القروض فارغة</p>
+                      <p className="text-xs text-[#737373] max-w-[240px] leading-relaxed">أنشئ أول تسهيل ائتماني الآن وابدأ بتتبع الأقساط والتحصيلات.</p>
                       <button
                         onClick={() => setShowLoanModal(true)}
-                        className="inline-flex flex-row items-center gap-2 rounded bg-[#10b981] px-4 py-2 text-sm font-bold text-black transition-colors hover:bg-[#34d399]"
+                        className="inline-flex items-center gap-2 rounded-lg bg-[#10b981] px-4 py-2.5 text-xs font-bold text-black transition-all duration-200 hover:bg-[#34d399] shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_28px_rgba(16,185,129,0.35)] active:scale-95"
                       >
                         <Plus size={16} />
-                        تسهيلات ائتمانية جديدة
+                        تسهيل ائتماني جديد
                       </button>
                     </div>
                   </td>
@@ -661,6 +714,7 @@ export default function DashboardClient() {
           <RiskAllocation investors={investors} loans={loans} />
         </section>
       )}
+      </div>{/* إغلاق grid-cols-12 */}
     </div>
   );
 }

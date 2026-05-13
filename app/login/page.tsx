@@ -95,25 +95,35 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex flex-1 w-full items-center justify-center px-4 py-12">
-      <div className="w-full max-w-sm rounded-lg border border-[#262626] bg-[#141414] p-8">
+    <div className="relative flex flex-1 w-full items-center justify-center px-4 py-12 overflow-hidden">
+      {/* ── خلفية متحركة مضيئة ── */}
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute top-[-30%] right-[-20%] h-[500px] w-[500px] rounded-full bg-[#10b981]/10 blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-20%] left-[-10%] h-[400px] w-[400px] rounded-full bg-[#3b82f6]/8 blur-[100px] animate-pulse" style={{animationDelay: '1s'}} />
+        <div className="absolute top-[20%] left-[30%] h-[300px] w-[300px] rounded-full bg-[#10b981]/5 blur-[80px] animate-pulse" style={{animationDelay: '2s'}} />
+      </div>
+
+      {/* ── بطاقة تسجيل الدخول ── */}
+      <div className="w-full max-w-sm rounded-2xl border border-[#262626] bg-[#141414]/80 backdrop-blur-xl p-8 shadow-[0_25px_50px_rgba(0,0,0,0.5)] animate-fade-in-up">
+        
+        {/* رأس البطاقة — الشعار */}
         <div className="mb-8 flex flex-col items-center text-center">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="flex h-8 w-8 scale-75 transform items-center justify-center rounded-sm bg-[#10b981] rotate-45">
-              <div className="h-4 w-4 bg-black rotate-[-45deg]"></div>
+          <div className="flex items-center gap-2.5 mb-6 group">
+            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[#10b981] rotate-45 shadow-[0_0_24px_rgba(16,185,129,0.4)] transition-shadow duration-500 group-hover:shadow-[0_0_32px_rgba(16,185,129,0.6)]">
+              <div className="h-5 w-5 bg-black rotate-[-45deg]"></div>
             </div>
-            <span className="text-xl font-bold tracking-tight text-[#ededed]">
+            <span className="text-2xl font-bold tracking-tight text-[#ededed]">
               نيون <span className="text-[#10b981]">فين</span>
             </span>
           </div>
-          <h2 className="text-2xl font-mono tracking-tighter text-[#ededed]">{isSignUp ? 'إنشاء حساب جديد' : 'تسجيل الدخول'}</h2>
+          <h2 className="text-xl font-bold tracking-tight text-[#ededed]">{isSignUp ? 'إنشاء حساب جديد' : 'تسجيل الدخول'}</h2>
           <p className="mt-2 text-xs uppercase tracking-widest text-[#737373]">
-            {isSignUp ? 'سجل بياناتك للبدء' : 'التحقق من الهوية'}
+            {isSignUp ? 'سجّل بياناتك للبدء' : 'التحقق من الهوية'}
           </p>
         </div>
 
         {error && (
-          <div className="mb-6 rounded bg-[#1a1a1a] p-3 text-sm text-red-500 border border-red-900/50">
+          <div className="mb-6 rounded-lg bg-[#ef4444]/10 border border-[#ef4444]/30 p-3 text-sm text-[#ef4444] animate-fade-in-down">
             {error}
           </div>
         )}
@@ -121,24 +131,24 @@ export default function LoginPage() {
         <form onSubmit={handleEmailAuth} className="flex flex-col gap-4 mb-6">
           {isSignUp && (
             <>
-              <div>
-                <label className="mb-1 block text-[10px] uppercase tracking-widest text-[#737373]">الاسم الكامل</label>
+              <div className="animate-fade-in-up" style={{animationDelay: '50ms'}}>
+                <label className="mb-1.5 block text-[10px] uppercase tracking-widest text-[#737373]">الاسم الكامل</label>
                 <input 
                   type="text" 
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full rounded border border-[#262626] bg-[#0f0f0f] px-3 py-2 text-sm text-[#ededed] focus:border-[#10b981] focus:outline-none focus:ring-1 focus:ring-[#10b981]" 
+                  className="w-full rounded-lg border border-[#262626] bg-[#0f0f0f] px-4 py-2.5 text-sm text-[#ededed] focus:border-[#10b981] focus:shadow-[0_0_0_3px_rgba(16,185,129,0.1)] outline-none transition-all duration-200" 
                   placeholder="محمد أحمد"
                   required={isSignUp}
                 />
               </div>
-              <div>
-                <label className="mb-1 block text-[10px] uppercase tracking-widest text-[#737373]">رقم الهاتف</label>
+              <div className="animate-fade-in-up" style={{animationDelay: '100ms'}}>
+                <label className="mb-1.5 block text-[10px] uppercase tracking-widest text-[#737373]">رقم الهاتف</label>
                 <input 
                   type="tel" 
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="w-full rounded border border-[#262626] bg-[#0f0f0f] px-3 py-2 text-sm text-[#ededed] focus:border-[#10b981] focus:outline-none focus:ring-1 focus:ring-[#10b981] text-left" 
+                  className="w-full rounded-lg border border-[#262626] bg-[#0f0f0f] px-4 py-2.5 text-sm text-[#ededed] focus:border-[#10b981] focus:shadow-[0_0_0_3px_rgba(16,185,129,0.1)] outline-none transition-all duration-200 text-left" 
                   dir="ltr"
                   placeholder="07xxxxxxxx"
                   required={isSignUp}
@@ -146,28 +156,28 @@ export default function LoginPage() {
               </div>
             </>
           )}
-          <div>
-            <label className="mb-1 block text-[10px] uppercase tracking-widest text-[#737373]" htmlFor="email">البريد الإلكتروني</label>
+          <div className="animate-fade-in-up" style={{animationDelay: isSignUp ? '150ms' : '50ms'}}>
+            <label className="mb-1.5 block text-[10px] uppercase tracking-widest text-[#737373]" htmlFor="email">البريد الإلكتروني</label>
             <input 
               id="email" 
               type="email" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded border border-[#262626] bg-[#0f0f0f] px-3 py-2 text-sm text-[#ededed] focus:border-[#10b981] focus:outline-none focus:ring-1 focus:ring-[#10b981] text-left" 
+              className="w-full rounded-lg border border-[#262626] bg-[#0f0f0f] px-4 py-2.5 text-sm text-[#ededed] focus:border-[#10b981] focus:shadow-[0_0_0_3px_rgba(16,185,129,0.1)] outline-none transition-all duration-200 text-left" 
               dir="ltr"
               placeholder="user@system.io"
               required
             />
           </div>
-          <div>
-            <label className="mb-1 block text-[10px] uppercase tracking-widest text-[#737373]" htmlFor="password">كلمة المرور</label>
+          <div className="animate-fade-in-up" style={{animationDelay: isSignUp ? '200ms' : '100ms'}}>
+            <label className="mb-1.5 block text-[10px] uppercase tracking-widest text-[#737373]" htmlFor="password">كلمة المرور</label>
             <div className="relative">
               <input 
                 id="password" 
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded border border-[#262626] bg-[#0f0f0f] px-3 pl-10 py-2 text-sm text-[#ededed] focus:border-[#10b981] focus:outline-none focus:ring-1 focus:ring-[#10b981] text-left"
+                className="w-full rounded-lg border border-[#262626] bg-[#0f0f0f] px-4 pl-10 py-2.5 text-sm text-[#ededed] focus:border-[#10b981] focus:shadow-[0_0_0_3px_rgba(16,185,129,0.1)] outline-none transition-all duration-200 text-left"
                 dir="ltr"
                 placeholder="••••••••"
                 required
@@ -175,21 +185,21 @@ export default function LoginPage() {
               <button 
                 type="button" 
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-[#737373] hover:text-[#10b981]"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-[#737373] hover:text-[#10b981] transition-colors"
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
           </div>
           {isSignUp && (
-            <div>
-              <label className="mb-1 block text-[10px] uppercase tracking-widest text-[#737373]">تأكيد كلمة المرور</label>
+            <div className="animate-fade-in-up" style={{animationDelay: '250ms'}}>
+              <label className="mb-1.5 block text-[10px] uppercase tracking-widest text-[#737373]">تأكيد كلمة المرور</label>
               <div className="relative">
                 <input 
                   type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full rounded border border-[#262626] bg-[#0f0f0f] px-3 pl-10 py-2 text-sm text-[#ededed] focus:border-[#10b981] focus:outline-none focus:ring-1 focus:ring-[#10b981] text-left"
+                  className="w-full rounded-lg border border-[#262626] bg-[#0f0f0f] px-4 pl-10 py-2.5 text-sm text-[#ededed] focus:border-[#10b981] focus:shadow-[0_0_0_3px_rgba(16,185,129,0.1)] outline-none transition-all duration-200 text-left"
                   dir="ltr"
                   placeholder="••••••••"
                   required={isSignUp}
@@ -197,7 +207,7 @@ export default function LoginPage() {
                 <button 
                   type="button" 
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-[#737373] hover:text-[#10b981]"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-[#737373] hover:text-[#10b981] transition-colors"
                 >
                   {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -207,7 +217,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="mt-2 flex w-full cursor-pointer items-center justify-center gap-3 rounded bg-[#10b981] px-4 py-3 text-sm font-bold text-black transition-colors hover:bg-[#34d399] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-3 flex w-full cursor-pointer items-center justify-center gap-3 rounded-lg bg-[#10b981] px-4 py-3 text-sm font-bold text-black transition-all duration-200 hover:bg-[#34d399] hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] focus:outline-none active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (isSignUp ? 'إنشاء حساب' : 'دخول آمن')}
           </button>
@@ -223,7 +233,7 @@ export default function LoginPage() {
           type="button"
           onClick={handleGoogleLogin}
           disabled={loading}
-          className="flex w-full cursor-pointer items-center justify-center gap-3 rounded border border-[#262626] bg-[#0f0f0f] px-4 py-3 text-sm font-bold text-[#ededed] transition-colors hover:bg-[#1a1a1a] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-lg border border-[#262626] bg-[#0f0f0f] px-4 py-3 text-sm font-bold text-[#ededed] transition-all duration-200 hover:bg-[#1a1a1a] hover:border-[#404040] focus:outline-none active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? (
             <Loader2 className="h-5 w-5 animate-spin" />

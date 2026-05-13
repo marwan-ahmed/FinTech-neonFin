@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Loader2, Search, Filter, Plus, TrendingUp, Wallet, Coins, AlertTriangle, CheckCircle, ArrowUpDown, Download, Printer } from 'lucide-react';
+import { Loader2, Search, Filter, Plus, TrendingUp, Wallet, Coins, AlertTriangle, CheckCircle, ArrowUpDown, Download, Printer, CreditCard } from 'lucide-react';
 import Link from 'next/link';
 
 import NewLoanModal from "@/components/NewLoanModal";
@@ -352,8 +352,35 @@ export default function LoansPage() {
                 ))
               ) : filteredLoans.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-12 text-center text-[#737373]">
-                    {loans.length > 0 ? 'لا توجد قروض مطابقة للبحث أو الفلتر المحدد.' : 'لا توجد تسهيلات ائتمانية مسجلة حتى الآن.'}
+                  <td colSpan={7} className="p-16 text-center">
+                    <div className="flex flex-col items-center justify-center gap-4 animate-fade-in-up">
+                      {/* أيقونة بصرية */}
+                      <div className="relative">
+                        <div className="h-16 w-16 rounded-2xl bg-[#10b981]/10 flex items-center justify-center border border-[#10b981]/20">
+                          <CreditCard size={28} className="text-[#10b981]" />
+                        </div>
+                        <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-[#10b981]/30 animate-ping" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-[#ededed]">
+                          {loans.length > 0 ? 'لا توجد نتائج مطابقة' : 'لا توجد تسهيلات ائتمانية بعد'}
+                        </p>
+                        <p className="text-xs text-[#737373] mt-1 max-w-xs mx-auto leading-relaxed">
+                          {loans.length > 0 
+                            ? 'جرّب تعديل كلمة البحث أو تغيير الفلتر المحدد للعثور على القرض المطلوب.'
+                            : 'ابدأ رحلة التمويل الآن — أضف أول تسهيل ائتماني وتابع الأقساط والتحصيلات بذكاء.'}
+                        </p>
+                      </div>
+                      {loans.length === 0 && (
+                        <button
+                          onClick={() => setShowLoanModal(true)}
+                          className="flex items-center gap-2 bg-[#10b981] text-black text-xs font-bold px-4 py-2.5 rounded-lg hover:bg-[#34d399] transition-all duration-200 shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_28px_rgba(16,185,129,0.35)] active:scale-95"
+                        >
+                          <Plus size={16} />
+                          <span>إضافة أول قرض</span>
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -363,7 +390,7 @@ export default function LoansPage() {
                   return (
                     <tr key={loan.id} className="border-b border-[#262626] transition-all duration-150 hover:bg-[#1a1a1a] group">
                       <td className="p-4 text-white font-sans">
-                        <Link href={`/dashboard/loans/${loan.id}`} className="group-hover:text-[#10b981] transition-colors font-bold flex flex-col">
+                        <Link href={`/dashboard/borrowers/${encodeURIComponent(loan.borrowerId || '')}`} className="group-hover:text-[#10b981] transition-colors font-bold flex flex-col">
                           <span>{loan.borrowerId || 'غير محدد'}</span>
                           <span className="text-[10px] text-[#737373] font-mono font-normal">ID: {loan.id.slice(0, 8)}</span>
                         </Link>

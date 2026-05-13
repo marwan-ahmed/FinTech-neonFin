@@ -4,11 +4,15 @@ import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, ArrowRight, Printer, Download, User, Info, FileText, CheckCircle, AlertTriangle, Edit, Trash2, Save, X, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import Link from 'next/link';
+import { useToast } from '@/components/Toast';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 export default function LoanDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const unwrappedParams = use(params);
   const loanId = unwrappedParams.id;
+  const { showToast } = useToast();
+  const { confirm } = useConfirm();
   
   const [loan, setLoan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -60,20 +64,42 @@ export default function LoanDetailsPage({ params }: { params: Promise<{ id: stri
 
   const handlePayInstallment = async (installmentNumber: number, amountDue: number, currentPaid: number) => {
     const remainingToPay = amountDue - currentPaid;
-    const input = prompt(`الرجاء إدخال المبلغ المراد دفعه لهذه الدفعة (المتبقي: ${remainingToPay.toLocaleString()} د.ع):`, remainingToPay.toString());
+    const input = window.prompt(`الرجاء إدخال المبلغ المراد دفعه لهذه الدفعة (المتبقي: ${remainingToPay.toLocaleString()} د.ع):`, remainingToPay.toString());
     
-    if (input === null) return; // User cancelled
+    if (input === null) return;
     const paymentAmount = parseFloat(input.trim());
     if (isNaN(paymentAmount) || paymentAmount <= 0) {
-      alert('مبلغ غير صالح');
+      showToast('error', 'مبلغ غير صالح', 'يرجى إدخال رقم صحيح أكبر من صفر.');
       return;
     }
     if (paymentAmount > remainingToPay) {
-      alert('لا يمكنك دفع مبلغ أكبر من المبلغ المتبقي لهذه الدفعة.');
+      showToast('error', 'مبلغ يتجاوز المتبقي', 'لا يمكنك دفع مبلغ أكبر من المبلغ المتبقي لهذه الدفعة.');
       return;
     }
 
-    if (!confirm(`هل أنت متأكد من سداد ${paymentAmount.toLocaleString()} د.ع؟`)) return;
+    const ok = await confirm({
+      title: 'تأكيد عملية السداد',
+      message: `هل أنت متأكد من سداد ${paymentAmount.toLocaleString()} د.ع للقسط رقم #${installmentNumber}؟`,
+      confirmText: 'تأكيد السداد',
+      variant: 'warning',
+    });
+    if (!ok) return;
+
+    // ── Optimistic UI: تحديث فوري ──
+    const previousLoan = { ...loan, schedule: [...(loan.schedule || [])] };
+    setLoan((prev: any) => ({
+      ...prev,
+      schedule: prev.schedule.map((s: any) => {
+        if (s.installmentNumber === installmentNumber) {
+          const newPaid = parseFloat(s.paidAmount || '0') + paymentAmount;
+          const fullyPaid = newPaid >= parseFloat(s.amount || '0');
+          return { ...s, paidAmount: newPaid.toString(), status: fullyPaid ? 'paid' : s.status };
+        }
+        return s;
+      }),
+    }));
+    showToast('success', 'تم تسجيل السداد', `${paymentAmount.toLocaleString()} د.ع — القسط #${installmentNumber}`);
+
     try {
       const res = await fetch(`/api/loans/${loanId}/update`, {
         method: 'PATCH',
@@ -81,18 +107,27 @@ export default function LoanDetailsPage({ params }: { params: Promise<{ id: stri
         body: JSON.stringify({ action: 'pay_installment', installmentNumber, paidAmount: paymentAmount })
       });
       if (res.ok) {
-        fetchLoan(); // Refresh
+        fetchLoan(); // مزامنة مع الخادم
       } else {
-        alert('حدث خطأ أثناء السداد');
+        // ROLLBACK: التراجع في حالة الخطأ
+        setLoan(previousLoan);
+        showToast('error', 'فشل في السداد', 'حدث خطأ — تم التراجع عن التحديث.');
       }
     } catch (e) {
       console.error(e);
-      alert('حدث خطأ أثناء السداد');
+      setLoan(previousLoan);
+      showToast('error', 'خطأ في الاتصال', 'تعذر الاتصال بالخادم — تم التراجع.');
     }
   };
 
   const handleClearLoan = async () => {
-    if (!confirm('هل أنت متأكد من إطفاء القرض بالكامل (سداد جميع الدفعات المتبقية)؟')) return;
+    const ok = await confirm({
+      title: 'إطفاء القرض بالكامل',
+      message: 'سيتم تسجيل سداد جميع الدفعات المتبقية. هل أنت متأكد؟',
+      confirmText: 'إطفاء القرض',
+      variant: 'warning',
+    });
+    if (!ok) return;
     try {
       const res = await fetch(`/api/loans/${loanId}/update`, {
         method: 'PATCH',
@@ -100,13 +135,14 @@ export default function LoanDetailsPage({ params }: { params: Promise<{ id: stri
         body: JSON.stringify({ action: 'clear_loan' })
       });
       if (res.ok) {
-        fetchLoan(); // Refresh
+        showToast('success', 'تم إطفاء القرض', 'تم سداد جميع الأقساط بنجاح.');
+        fetchLoan();
       } else {
-        alert('حدث خطأ أثناء إطفاء القرض');
+        showToast('error', 'فشل في إطفاء القرض', 'حدث خطأ أثناء معالجة الطلب.');
       }
     } catch (e) {
       console.error(e);
-      alert('حدث خطأ أثناء إطفاء القرض');
+      showToast('error', 'خطأ في الاتصال', 'تعذر الوصول إلى الخادم.');
     }
   };
 
@@ -137,18 +173,25 @@ export default function LoanDetailsPage({ params }: { params: Promise<{ id: stri
 
   // Delete entire loan handler
   const handleDeleteLoan = async () => {
-    if (!confirm('⚠️ تحذير شديد: هل أنت متأكد من حذف هذا القرض بالكامل مع كافة سجلات وجداول السداد الخاصة به؟ هذا الإجراء نهائي ولا يمكن التراجع عنه.')) return;
+    const ok = await confirm({
+      title: 'حذف القرض نهائياً',
+      message: 'سيتم حذف هذا القرض مع كافة سجلات وجداول السداد الخاصة به. هذا الإجراء نهائي ولا يمكن التراجع عنه.',
+      confirmText: 'حذف نهائي',
+      variant: 'danger',
+    });
+    if (!ok) return;
     try {
       const res = await fetch(`/api/loans/${loanId}`, { method: 'DELETE' });
       if (res.ok) {
+        showToast('success', 'تم حذف القرض', 'تم حذف القرض وجميع سجلاته بنجاح.');
         router.push('/dashboard/loans');
       } else {
         const errData = await res.json().catch(() => ({}));
-        alert(errData.error || 'فشل حذف القرض');
+        showToast('error', 'فشل حذف القرض', errData.error || 'حدث خطأ غير متوقع.');
       }
     } catch (err) {
       console.error(err);
-      alert('حدث خطأ أثناء الحذف');
+      showToast('error', 'خطأ في الاتصال', 'تعذر الوصول إلى الخادم.');
     }
   };
 
