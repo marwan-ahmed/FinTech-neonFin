@@ -1,7 +1,9 @@
-import { verifySession } from '@/lib/auth-server';
+import { getCurrentUser } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Activity, Users, ShieldAlert, Building2, Settings, Database, LogOut } from 'lucide-react';
+import { ShieldAlert, LogOut } from 'lucide-react';
+import AdminSidebarLinks from './AdminSidebarLinks';
+import SystemStatus from './SystemStatus';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,11 +12,14 @@ export default async function SuperAdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await verifySession();
+  const user = await getCurrentUser();
 
-  // Basic check, actual role check happens in the page
-  if (!session) {
+  // SECURITY: Verify both authentication AND superadmin role at the layout level
+  if (!user) {
     redirect('/login');
+  }
+  if (user.role !== 'superadmin') {
+    redirect('/dashboard');
   }
 
   return (
@@ -31,34 +36,7 @@ export default async function SuperAdminLayout({
         </div>
 
         <div className="flex-1 overflow-y-auto py-6">
-          <nav className="grid gap-2 px-4">
-            <p className="px-2 text-xs font-bold uppercase tracking-wider text-[#737373] mb-2">Administration</p>
-            
-            <Link href="/super-admin" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium bg-[#262626] text-white">
-              <Activity className="h-4 w-4" />
-              Platform Overview
-            </Link>
-            
-            <button className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[#a3a3a3] hover:bg-[#262626] hover:text-white transition-colors cursor-not-allowed opacity-50">
-              <Building2 className="h-4 w-4" />
-              Tenants Management
-            </button>
-            
-            <button className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[#a3a3a3] hover:bg-[#262626] hover:text-white transition-colors cursor-not-allowed opacity-50">
-              <Users className="h-4 w-4" />
-              Global Users
-            </button>
-
-            <button className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[#a3a3a3] hover:bg-[#262626] hover:text-white transition-colors cursor-not-allowed opacity-50">
-              <Database className="h-4 w-4" />
-              DB Operations
-            </button>
-
-            <button className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[#a3a3a3] hover:bg-[#262626] hover:text-white transition-colors cursor-not-allowed opacity-50">
-              <Settings className="h-4 w-4" />
-              System Settings
-            </button>
-          </nav>
+          <AdminSidebarLinks />
         </div>
 
         <div className="p-4 border-t border-[#262626]">
@@ -66,7 +44,7 @@ export default async function SuperAdminLayout({
              <div className="h-8 w-8 rounded-full bg-red-600 flex items-center justify-center font-bold">SA</div>
              <div className="flex-1 overflow-hidden">
                <p className="text-sm font-medium truncate">Root Access</p>
-               <p className="text-xs text-red-400 truncate">{session.email}</p>
+               <p className="text-xs text-red-400 truncate">{user.email}</p>
              </div>
            </div>
            <Link href="/dashboard" className="flex items-center justify-center gap-2 w-full mt-4 py-2 text-sm text-[#a3a3a3] hover:text-white border border-[#262626] rounded-md transition-colors">
@@ -79,17 +57,10 @@ export default async function SuperAdminLayout({
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         <header className="h-16 flex-shrink-0 flex items-center justify-between border-b border-[#262626] bg-[#0a0a0a] px-8">
-            <h2 className="text-lg font-semibold">SAAS Central Command</h2>
-            <div className="flex items-center gap-3 text-xs font-mono">
-                <span className="text-[#a3a3a3]">SYSTEM STATUS:</span>
-                <span className="flex items-center gap-1.5 text-green-500">
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                    </span>
-                    OPERATIONAL
-                </span>
-            </div>
+            <h2 className="text-base font-bold uppercase tracking-widest text-[#737373] flex items-center gap-2">
+              <span className="text-white">Root</span> Command
+            </h2>
+            <SystemStatus />
         </header>
         <div className="p-8">
             {children}

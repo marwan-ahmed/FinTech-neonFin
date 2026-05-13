@@ -1,9 +1,11 @@
 import { getCurrentUser } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
-import { tenants, users, loans, investors } from "@/schema/schema";
-import { count, sum } from "drizzle-orm";
-import { Server, Users, Wallet, CreditCard, Activity, Search, ShieldCheck, Building2 } from "lucide-react";
+import { tenants, users, loans, investors, kycApplications } from "@/schema/schema";
+import { count, sum, eq, sql } from "drizzle-orm";
+import { Server, Users, Wallet, CreditCard, AlertTriangle, TrendingUp, ShieldCheck, FileCheck } from "lucide-react";
+import TenantsTable, { type TenantRow } from "./TenantsTable";
+import PlatformCharts from "./PlatformCharts";
 
 export default async function SuperAdminPage() {
   const user = await getCurrentUser();
@@ -14,141 +16,181 @@ export default async function SuperAdminPage() {
     notFound();
   }
 
-  // Fetch some quick stats for the Super Admin
+  // ── Aggregate Platform Stats ──────────────────────────────────
   const [totalTenants] = await db.select({ count: count() }).from(tenants);
   const [totalUsers] = await db.select({ count: count() }).from(users);
-  
-  // Aggregate Financials
   const [totalLoansObj] = await db.select({ total: sum(loans.totalDebt) }).from(loans);
   const [totalCapitalObj] = await db.select({ total: sum(investors.capital) }).from(investors);
-  
+  const [totalLoansCount] = await db.select({ count: count() }).from(loans);
+  const [defaultedLoansCount] = await db.select({ count: count() }).from(loans).where(eq(loans.status, 'defaulted'));
+  const [pendingKycCount] = await db.select({ count: count() }).from(kycApplications).where(eq(kycApplications.status, 'pending'));
+
   const totalPlatformLoans = parseFloat(totalLoansObj.total || '0');
   const totalPlatformCapital = parseFloat(totalCapitalObj.total || '0');
+  const defaultRate = totalLoansCount.count > 0
+    ? ((defaultedLoansCount.count / totalLoansCount.count) * 100).toFixed(1)
+    : '0.0';
 
-  // Fetch the list of tenants to display
+  // ── Fetch Growth Data (Cumulative Organizations Onboarded) ──
+  // Groups counts of tenants by Year-Month format using Postgres to_char
+  const monthlyRegistrations = await db
+    .select({
+      month: sql<string>`TO_CHAR(${tenants.createdAt}, 'YYYY-MM')`,
+      count: count(),
+    })
+    .from(tenants)
+    .groupBy(sql`TO_CHAR(${tenants.createdAt}, 'YYYY-MM')`)
+    .orderBy(sql`TO_CHAR(${tenants.createdAt}, 'YYYY-MM')`);
+
+  const growthData = monthlyRegistrations.map((row) => ({
+    month: row.month,
+    organizations: row.count,
+  }));
+
+  // ── Enriched Tenants List (with per-tenant stats) ─────────────
   const allTenantsList = await db.select().from(tenants);
+
+  // Per-tenant users count
+  const usersPerTenant = await db
+    .select({ tenantId: users.tenantId, count: count() })
+    .from(users)
+    .groupBy(users.tenantId);
+
+  // Per-tenant loans count
+  const loansPerTenant = await db
+    .select({ tenantId: loans.tenantId, count: count() })
+    .from(loans)
+    .groupBy(loans.tenantId);
+
+  // Per-tenant capital
+  const capitalPerTenant = await db
+    .select({ tenantId: investors.tenantId, total: sum(investors.capital) })
+    .from(investors)
+    .groupBy(investors.tenantId);
+
+  // Build lookup maps
+  const usersMap = new Map(usersPerTenant.map((r) => [r.tenantId, r.count]));
+  const loansMap = new Map(loansPerTenant.map((r) => [r.tenantId, r.count]));
+  const capitalMap = new Map(capitalPerTenant.map((r) => [r.tenantId, parseFloat(r.total || '0')]));
+
+  const enrichedTenants: TenantRow[] = allTenantsList.map((t) => ({
+    id: t.id,
+    name: t.name,
+    createdAt: t.createdAt.toISOString(),
+    usersCount: usersMap.get(t.id) || 0,
+    loansCount: loansMap.get(t.id) || 0,
+    totalCapital: capitalMap.get(t.id) || 0,
+  }));
+
+  // Build Chart Distribution Data (from the mapped list)
+  const distributionData = enrichedTenants.map((t) => ({
+    name: t.name,
+    loansCount: t.loansCount,
+    totalCapital: t.totalCapital,
+  }));
+
+  // ── Stats Card Data ───────────────────────────────────────────
+  const statsCards = [
+    {
+      title: 'Active Organizations',
+      value: totalTenants.count.toString(),
+      icon: Server,
+      color: 'blue',
+      gradient: 'from-blue-500/10 to-blue-600/5',
+      borderColor: 'border-blue-500/20',
+      iconColor: 'text-blue-500',
+      valuePrefix: '',
+    },
+    {
+      title: 'Total Accounts',
+      value: totalUsers.count.toString(),
+      icon: Users,
+      color: 'purple',
+      gradient: 'from-purple-500/10 to-purple-600/5',
+      borderColor: 'border-purple-500/20',
+      iconColor: 'text-purple-500',
+      valuePrefix: '',
+    },
+    {
+      title: 'Platform Capital',
+      value: totalPlatformCapital.toLocaleString(),
+      icon: Wallet,
+      color: 'green',
+      gradient: 'from-green-500/10 to-green-600/5',
+      borderColor: 'border-green-500/20',
+      iconColor: 'text-green-500',
+      valuePrefix: '$',
+    },
+    {
+      title: 'Active Loans Value',
+      value: totalPlatformLoans.toLocaleString(),
+      icon: CreditCard,
+      color: 'orange',
+      gradient: 'from-orange-500/10 to-orange-600/5',
+      borderColor: 'border-orange-500/20',
+      iconColor: 'text-orange-500',
+      valuePrefix: '$',
+    },
+    {
+      title: 'Default Rate',
+      value: `${defaultRate}%`,
+      icon: AlertTriangle,
+      color: parseFloat(defaultRate) > 5 ? 'red' : 'emerald',
+      gradient: parseFloat(defaultRate) > 5 ? 'from-red-500/10 to-red-600/5' : 'from-emerald-500/10 to-emerald-600/5',
+      borderColor: parseFloat(defaultRate) > 5 ? 'border-red-500/20' : 'border-emerald-500/20',
+      iconColor: parseFloat(defaultRate) > 5 ? 'text-red-500' : 'text-emerald-500',
+      valuePrefix: '',
+    },
+    {
+      title: 'Pending KYC',
+      value: pendingKycCount.count.toString(),
+      icon: FileCheck,
+      color: pendingKycCount.count > 0 ? 'yellow' : 'emerald',
+      gradient: pendingKycCount.count > 0 ? 'from-yellow-500/10 to-yellow-600/5' : 'from-emerald-500/10 to-emerald-600/5',
+      borderColor: pendingKycCount.count > 0 ? 'border-yellow-500/20' : 'border-emerald-500/20',
+      iconColor: pendingKycCount.count > 0 ? 'text-yellow-500' : 'text-emerald-500',
+      valuePrefix: '',
+    },
+  ];
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
-      <div>
+      {/* Header */}
+      <div className="animate-fade-in">
         <h1 className="text-3xl font-bold tracking-tight">Platform Overview</h1>
         <p className="text-[#a3a3a3] mt-2">Comprehensive birds-eye view of your FinTech SaaS performance.</p>
       </div>
       
-      {/* Quick Stats Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {/* Card 1 */}
-        <div className="rounded-xl border border-[#262626] bg-[#0f0f0f] shadow-lg p-6 relative overflow-hidden group">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-sm text-[#a3a3a3]">Active Organizations</h3>
-            <Server className="h-5 w-5 text-blue-500" />
-          </div>
-          <p className="text-4xl font-bold text-white">{totalTenants.count}</p>
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-        </div>
-
-        {/* Card 2 */}
-        <div className="rounded-xl border border-[#262626] bg-[#0f0f0f] shadow-lg p-6 relative overflow-hidden group">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-sm text-[#a3a3a3]">Total Accounts</h3>
-            <Users className="h-5 w-5 text-purple-500" />
-          </div>
-          <p className="text-4xl font-bold text-white">{totalUsers.count}</p>
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-        </div>
-
-        {/* Card 3 */}
-        <div className="rounded-xl border border-[#262626] bg-[#0f0f0f] shadow-lg p-6 relative overflow-hidden group">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-sm text-[#a3a3a3]">Platform Capital Managed</h3>
-            <Wallet className="h-5 w-5 text-green-500" />
-          </div>
-          <p className="text-4xl font-bold text-white">${totalPlatformCapital.toLocaleString()}</p>
-          <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-        </div>
-
-        {/* Card 4 */}
-        <div className="rounded-xl border border-[#262626] bg-[#0f0f0f] shadow-lg p-6 relative overflow-hidden group">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-sm text-[#a3a3a3]">Platform Active Loans</h3>
-            <CreditCard className="h-5 w-5 text-orange-500" />
-          </div>
-          <p className="text-4xl font-bold text-white">${totalPlatformLoans.toLocaleString()}</p>
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-        </div>
+      {/* Stats Grid — 6 cards in 3x2 grid */}
+      <div className="grid gap-4 md:gap-6 grid-cols-2 lg:grid-cols-3 stagger-children">
+        {statsCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <div
+              key={card.title}
+              className={`rounded-xl border ${card.borderColor} bg-[#0f0f0f] shadow-lg p-5 lg:p-6 relative overflow-hidden group hover:border-[#404040] transition-all duration-300`}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-xs lg:text-sm text-[#a3a3a3] uppercase tracking-wider">{card.title}</h3>
+                <div className={`h-9 w-9 rounded-lg bg-gradient-to-br ${card.gradient} flex items-center justify-center`}>
+                  <Icon className={`h-4.5 w-4.5 ${card.iconColor}`} />
+                </div>
+              </div>
+              <p className="text-3xl lg:text-4xl font-bold text-white">
+                {card.valuePrefix}{card.value}
+              </p>
+              {/* Glow effect on hover */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${card.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`} />
+            </div>
+          );
+        })}
       </div>
 
-      {/* Tenants List */}
-      <div className="rounded-xl border border-[#262626] bg-[#0f0f0f] shadow-lg overflow-hidden">
-        <div className="p-6 border-b border-[#262626] flex items-center justify-between bg-[#141414]">
-          <div>
-            <h3 className="font-semibold text-lg flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-[#a3a3a3]" />
-              Organizations (Tenants)
-            </h3>
-            <p className="text-sm text-[#737373] mt-1">Full breakdown of registered SaaS spaces.</p>
-          </div>
-          
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#737373]" />
-            <input 
-              type="text" 
-              placeholder="Search tenants..." 
-              className="bg-[#0a0a0a] border border-[#262626] text-white text-sm rounded-md pl-9 pr-4 py-2 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
-              disabled
-            />
-          </div>
-        </div>
-        
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="text-xs uppercase bg-[#0a0a0a] text-[#737373] border-b border-[#262626]">
-              <tr>
-                <th className="px-6 py-4 font-semibold">Tenant Name</th>
-                <th className="px-6 py-4 font-semibold">Tenant ID</th>
-                <th className="px-6 py-4 font-semibold">Creation Date</th>
-                <th className="px-6 py-4 font-semibold">Status</th>
-                <th className="px-6 py-4 font-semibold text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#262626] text-[#d4d4d4]">
-              {allTenantsList.map((tenant) => (
-                <tr key={tenant.id} className="hover:bg-[#1a1a1a] transition-colors">
-                  <td className="px-6 py-4 font-medium text-white flex items-center gap-3">
-                     <div className="h-8 w-8 rounded bg-[#262626] flex items-center justify-center text-xs font-bold text-red-400">
-                        {tenant.name.substring(0,2).toUpperCase()}
-                     </div>
-                     {tenant.name}
-                  </td>
-                  <td className="px-6 py-4 font-mono text-xs text-[#737373]">{tenant.id}</td>
-                  <td className="px-6 py-4 text-[#a3a3a3]">
-                    {tenant.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                  </td>
-                  <td className="px-6 py-4">
-                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-400 border border-green-500/20">
-                        <span className="h-1.5 w-1.5 rounded-full bg-green-500"></span>
-                        Active
-                     </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button className="text-red-400 hover:text-red-300 text-xs font-semibold uppercase tracking-wider px-3 py-1.5 border border-red-500/30 rounded hover:bg-red-500/10 transition-colors">
-                      Manage
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {allTenantsList.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-[#737373] bg-[#0a0a0a]">
-                    <Activity className="h-8 w-8 mx-auto mb-3 opacity-20 text-[#a3a3a3]" />
-                    <p>No tenants registered yet.</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* Charts Section — Side-by-side layout */}
+      <PlatformCharts growthData={growthData} distributionData={distributionData} />
+
+      {/* Tenants Table — interactive client component */}
+      <TenantsTable tenants={enrichedTenants} />
     </div>
   );
 }
