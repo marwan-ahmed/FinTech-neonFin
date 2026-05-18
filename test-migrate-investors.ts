@@ -1,8 +1,14 @@
+import * as dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
 import postgres from 'postgres';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { sql } from 'drizzle-orm';
 
-const dbUrl = "postgresql://neondb_owner:npg_Xqay3hvY7DGW@ep-wandering-water-amudnicy-pooler.c-5.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require";
+const dbUrl = process.env.DATABASE_URL!;
+if (!dbUrl) {
+  console.error("ERROR: DATABASE_URL is not defined in .env.local");
+  process.exit(1);
+}
 
 async function migrate() {
   try {
