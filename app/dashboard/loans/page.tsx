@@ -391,7 +391,18 @@ export default function LoansPage() {
                     <tr key={loan.id} className="border-b border-[#262626] transition-all duration-150 hover:bg-[#1a1a1a] group">
                       <td className="p-4 text-white font-sans">
                         <Link href={`/dashboard/borrowers/${encodeURIComponent(loan.borrowerId || '')}`} className="group-hover:text-[#10b981] transition-colors font-bold flex flex-col">
-                          <span>{loan.borrowerId || 'غير محدد'}</span>
+                          <span className="flex items-center gap-2">
+                            {loan.borrowerId || 'غير محدد'}
+                            {loan.disbursementType === 'cards' ? (
+                              <span className="text-[9px] font-sans font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 px-1.5 py-0.5 rounded">
+                                📦 عيني ({loan.cardsAllocated} بطاقة)
+                              </span>
+                            ) : (
+                              <span className="text-[9px] font-sans font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded">
+                                💵 نقدي
+                              </span>
+                            )}
+                          </span>
                           <span className="text-[10px] text-[#737373] font-mono font-normal">ID: {loan.id.slice(0, 8)}</span>
                         </Link>
                       </td>

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { loans, loanSchedules } from '@/schema/schema';
+import { loans, loanSchedules, cardBatches } from '@/schema/schema';
 import { desc, eq } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
@@ -18,6 +18,10 @@ const loanSchema = z.object({
   saleCardValue: z.number().or(z.string()).optional().transform((val) => val ? Number(val) : undefined),
   score: z.string().optional().default('A'),
   status: z.enum(['pending', 'approved', 'active', 'completed', 'defaulted']).optional().default('active'),
+  disbursementType: z.enum(['cash', 'cards']).optional().default('cash'),
+  cardBatchId: z.string().uuid().optional().nullable(),
+  cardsAllocated: z.number().int().nonnegative().optional().default(0),
+  cardWholesalePrice: z.number().optional().nullable(),
   schedule: z.array(z.object({
     installmentNumber: z.number().int().optional(),
     dueDate: z.string().or(z.date()).transform((val) => new Date(val)),
@@ -78,12 +82,38 @@ export async function POST(req: Request) {
         tenure: data.tenure,
         marketCardValue: data.marketCardValue ? parseFloat(data.marketCardValue.toString()).toFixed(2) : null,
         saleCardValue: data.saleCardValue ? parseFloat(data.saleCardValue.toString()).toFixed(2) : null,
+        disbursementType: data.disbursementType,
+        cardBatchId: data.cardBatchId,
+        cardsAllocated: data.cardsAllocated,
+        cardWholesalePrice: data.cardWholesalePrice ? parseFloat(data.cardWholesalePrice.toString()).toFixed(2) : null,
         score: data.score,
         status: data.status,
         nextDue: data.nextDue,
         createdAt: new Date(),
         updatedAt: new Date()
       }).returning();
+
+      // If card loan, deduct from batch inventory
+      if (data.disbursementType === 'cards' && data.cardBatchId && data.cardsAllocated > 0) {
+        const [batch] = await tx.select()
+          .from(cardBatches)
+          .where(eq(cardBatches.id, data.cardBatchId))
+          .limit(1);
+        
+        if (!batch) {
+          throw new Error("وجبة البطاقات المحددة غير موجودة.");
+        }
+        if (batch.remainingQuantity < data.cardsAllocated) {
+          throw new Error(`الكمية المطلوبة (${data.cardsAllocated}) غير متوفرة في المخزن (المتبقي: ${batch.remainingQuantity}).`);
+        }
+        
+        await tx.update(cardBatches)
+          .set({
+            remainingQuantity: batch.remainingQuantity - data.cardsAllocated,
+            updatedAt: new Date()
+          })
+          .where(eq(cardBatches.id, data.cardBatchId));
+      }
       
       // إدراج جدول الأقساط بشكل متزامن داخل المعاملة
       if (data.schedule && data.schedule.length > 0) {

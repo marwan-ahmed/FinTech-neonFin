@@ -33,6 +33,18 @@ export const investors = pgTable('investors', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+export const cardBatches = pgTable('card_batches', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').references(() => tenants.id).notNull(),
+  batchName: text('batch_name').notNull(),
+  quantity: integer('quantity').notNull(),
+  remainingQuantity: integer('remaining_quantity').notNull(),
+  wholesalePrice: decimal('wholesale_price', { precision: 12, scale: 2 }).notNull(),
+  totalCost: decimal('total_cost', { precision: 12, scale: 2 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 export const loans = pgTable('loans', {
   id: uuid('id').primaryKey().defaultRandom(),
   tenantId: uuid('tenant_id').references(() => tenants.id).notNull(),
@@ -46,6 +58,11 @@ export const loans = pgTable('loans', {
   tenure: integer('tenure').notNull(),
   marketCardValue: decimal('market_card_value', { precision: 12, scale: 2 }),
   saleCardValue: decimal('sale_card_value', { precision: 12, scale: 2 }),
+  
+  disbursementType: text('disbursement_type').default('cash').notNull(),
+  cardBatchId: uuid('card_batch_id').references(() => cardBatches.id),
+  cardsAllocated: integer('cards_allocated').default(0),
+  cardWholesalePrice: decimal('card_wholesale_price', { precision: 12, scale: 2 }),
   
   score: text('score').default('A').notNull(),
   status: loanStatusEnum('status').default('active').notNull(),

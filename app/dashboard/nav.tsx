@@ -18,6 +18,7 @@ import {
 const links = [
   { href: '/dashboard', label: 'لوحة التحكم', icon: LayoutDashboard },
   { href: '/dashboard/investments', label: 'محافظ الاستثمار', icon: Landmark },
+  { href: '/dashboard/cards', label: 'مخازن البطاقات 📦', icon: CreditCard },
   { href: '/dashboard/loans', label: 'إدارة القروض', icon: CreditCard },
   { href: '/dashboard/kyc', label: 'طلبات التحقق', icon: ShieldCheck },
   { href: '/dashboard/reports', label: 'التقارير', icon: BarChart3 },

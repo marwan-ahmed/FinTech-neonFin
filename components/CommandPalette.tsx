@@ -53,6 +53,7 @@ function CommandPaletteModal({ onClose }: { onClose: () => void }) {
   // قائمة الأوامر المتاحة
   const commands: CommandItem[] = [
     { id: 'dashboard', label: 'لوحة التحكم', description: 'الرئيسية والمؤشرات', icon: <LayoutDashboard size={16} />, action: () => navigate('/dashboard'), keywords: ['لوحة', 'رئيسية', 'dashboard', 'home'] },
+    { id: 'cards', label: 'مخازن البطاقات 📦', description: 'شراء وإدارة البطاقات العينية', icon: <CreditCard size={16} />, action: () => navigate('/dashboard/cards'), keywords: ['بطاقات', 'كارتات', 'مخزن', 'cards', 'wholesale'] },
     { id: 'loans', label: 'إدارة القروض', description: 'عرض وإدارة التسهيلات', icon: <CreditCard size={16} />, action: () => navigate('/dashboard/loans'), keywords: ['قروض', 'تسهيلات', 'loans', 'credit'] },
     { id: 'investments', label: 'محافظ الاستثمار', description: 'المستثمرين ورأس المال', icon: <Landmark size={16} />, action: () => navigate('/dashboard/investments'), keywords: ['استثمار', 'مستثمر', 'محفظة', 'investments'] },
     { id: 'reports', label: 'التقارير والإحصائيات', description: 'تحليل الأداء المالي', icon: <BarChart3 size={16} />, action: () => navigate('/dashboard/reports'), keywords: ['تقرير', 'إحصائيات', 'reports', 'analytics'] },

@@ -44,6 +44,24 @@ export default function NewLoanModal({ onClose, onSuccess }: { onClose: () => vo
     fetchLoans();
   }, []);
 
+  const [cardBatches, setCardBatches] = useState<any[]>([]);
+
+  // Fetch card batches when modal opens
+  useEffect(() => {
+    async function fetchBatches() {
+      try {
+        const res = await fetch('/api/card-batches');
+        if (res.ok) {
+          const data = await res.json();
+          setCardBatches(data.filter((b: any) => b.remainingQuantity > 0));
+        }
+      } catch (err) {
+        console.error("Failed to fetch card batches", err);
+      }
+    }
+    fetchBatches();
+  }, []);
+
   // Form State
   const [formData, setFormData] = useState({
     // Personal Info
@@ -59,15 +77,28 @@ export default function NewLoanModal({ onClose, onSuccess }: { onClose: () => vo
     // Configurable Pricing (Card model)
     marketCardValue: '5000', // How much cash the card gets in the market
     saleCardValue: '6500',   // How much the loan costs per card
+
+    // Card Disbursement
+    disbursementType: 'cash',
+    cardBatchId: '',
+    cardsAllocated: '100',
+    cardWholesalePrice: '0',
   });
 
   // Calculate derived values
-  const cashNeeded = Number(formData.cashNeeded) || 0;
+  const isCardDisbursement = formData.disbursementType === 'cards';
   const marketValue = Number(formData.marketCardValue) || 1;
   const saleValue = Number(formData.saleCardValue) || 0;
   const tenure = Number(formData.tenure) || 1;
 
-  const cardsCount = cashNeeded / marketValue;
+  const cardsCount = isCardDisbursement 
+    ? Number(formData.cardsAllocated) || 0 
+    : (Number(formData.cashNeeded) || 0) / marketValue;
+
+  const cashNeeded = isCardDisbursement
+    ? cardsCount * marketValue
+    : Number(formData.cashNeeded) || 0;
+
   const totalDebt = cardsCount * saleValue;
   const monthlyInstallment = totalDebt / tenure;
 
@@ -101,6 +132,21 @@ export default function NewLoanModal({ onClose, onSuccess }: { onClose: () => vo
   }, [tenure, monthlyInstallment]);
 
   const handleSubmit = async () => {
+    // If card disbursement, validate batch selected and quantities
+    if (isCardDisbursement) {
+      if (!formData.cardBatchId) {
+        setErrorObj("يرجى اختيار وجبة البطاقات قبل المتابعة.");
+        setIsSubmitting(false);
+        return;
+      }
+      const selected = cardBatches.find(b => b.id === formData.cardBatchId);
+      if (selected && Number(formData.cardsAllocated) > selected.remainingQuantity) {
+        setErrorObj(`الكمية المطلوبة تتجاوز المتاح في مخزن هذه الوجبة (${selected.remainingQuantity} كارت).`);
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
       const loanData = {
@@ -114,6 +160,11 @@ export default function NewLoanModal({ onClose, onSuccess }: { onClose: () => vo
         tenure: tenure,
         marketCardValue: Number(formData.marketCardValue),
         saleCardValue: Number(formData.saleCardValue),
+
+        disbursementType: formData.disbursementType,
+        cardBatchId: isCardDisbursement ? formData.cardBatchId : null,
+        cardsAllocated: isCardDisbursement ? Number(formData.cardsAllocated) : 0,
+        cardWholesalePrice: isCardDisbursement ? Number(formData.cardWholesalePrice) : null,
         
         status: 'active',
         score: 'A',
@@ -295,12 +346,73 @@ export default function NewLoanModal({ onClose, onSuccess }: { onClose: () => vo
                   {/* Inputs */}
                   <div className="space-y-5 bg-[#0f0f0f] p-5 rounded border border-[#262626]">
                     <div>
-                      <label className="text-xs text-[#737373] uppercase mb-1.5 block tracking-wider">مبلغ القرض المطلوب (كاش للزبون)</label>
-                      <div className="relative">
-                        <input type="number" dir="ltr" name="cashNeeded" value={formData.cashNeeded} onChange={handleInputChange} className="w-full bg-[#141414] border border-[#262626] rounded px-4 py-3 text-white text-left focus:border-[#10b981] outline-none transition-colors font-mono text-lg" />
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#737373] text-sm font-bold">IQD</span>
-                      </div>
+                      <label className="text-xs text-[#737373] uppercase mb-1.5 block tracking-wider">طريقة صرف القرض</label>
+                      <select name="disbursementType" value={formData.disbursementType} onChange={handleInputChange} className="w-full bg-[#141414] border border-[#262626] rounded px-4 py-3 text-white focus:border-[#10b981] outline-none transition-colors dir-rtl appearance-none mb-4">
+                        <option value="cash">صرف نقدي فوري (من السيولة)</option>
+                        <option value="cards">صرف بطاقات عينية (تمويل عيني)</option>
+                      </select>
                     </div>
+
+                    {!isCardDisbursement ? (
+                      <div>
+                        <label className="text-xs text-[#737373] uppercase mb-1.5 block tracking-wider">مبلغ القرض المطلوب (كاش للزبون)</label>
+                        <div className="relative">
+                          <input type="number" dir="ltr" name="cashNeeded" value={formData.cashNeeded} onChange={handleInputChange} className="w-full bg-[#141414] border border-[#262626] rounded px-4 py-3 text-white text-left focus:border-[#10b981] outline-none transition-colors font-mono text-lg" />
+                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#737373] text-sm font-bold">IQD</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-4 border-r-2 border-[#10b981]/30 pr-4 py-1">
+                        <div>
+                          <label className="text-xs text-[#737373] uppercase mb-1.5 block tracking-wider">اختر وجبة البطاقات المتاحة</label>
+                          <select 
+                            name="cardBatchId" 
+                            value={formData.cardBatchId} 
+                            onChange={(e) => {
+                              const batchId = e.target.value;
+                              const selected = cardBatches.find(b => b.id === batchId);
+                              setFormData(prev => ({
+                                ...prev,
+                                cardBatchId: batchId,
+                                cardWholesalePrice: selected ? selected.wholesalePrice.toString() : '0'
+                              }));
+                            }} 
+                            className="w-full bg-[#141414] border border-[#262626] rounded px-4 py-3 text-white focus:border-[#10b981] outline-none transition-colors dir-rtl appearance-none"
+                          >
+                            <option value="">-- اختر وجبة بطاقات --</option>
+                            {cardBatches.map(b => (
+                              <option key={b.id} value={b.id}>
+                                {b.batchName} (المتبقي: {b.remainingQuantity} كارت • بسعر جملة {parseFloat(b.wholesalePrice).toLocaleString()} د.ع)
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-xs text-[#737373] uppercase mb-1.5 block tracking-wider">عدد البطاقات المراد صرفها للمقترض</label>
+                          <input 
+                            type="number" 
+                            dir="ltr" 
+                            name="cardsAllocated" 
+                            value={formData.cardsAllocated} 
+                            onChange={handleInputChange} 
+                            className="w-full bg-[#141414] border border-[#262626] rounded px-4 py-3 text-white text-left focus:border-[#10b981] outline-none transition-colors font-mono text-lg" 
+                            placeholder="100"
+                          />
+                          {formData.cardBatchId && (() => {
+                            const selected = cardBatches.find(b => b.id === formData.cardBatchId);
+                            if (selected && Number(formData.cardsAllocated) > selected.remainingQuantity) {
+                              return (
+                                <p className="text-xs text-red-500 font-bold mt-1">
+                                  عذراً، الكمية المطلوبة تتجاوز الكمية المتاحة في الوجبة المحددة ({selected.remainingQuantity} كارت).
+                                </p>
+                              );
+                            }
+                            return null;
+                          })()}
+                        </div>
+                      </div>
+                    )}
+
                     <div>
                       <label className="text-xs text-[#737373] uppercase mb-1.5 block tracking-wider">مدة القرض (بالأشهر)</label>
                       <select name="tenure" value={formData.tenure} onChange={(e) => setFormData(prev => ({...prev, tenure: e.target.value}))} className="w-full bg-[#141414] border border-[#262626] rounded px-4 py-3 text-white focus:border-[#10b981] outline-none transition-colors dir-rtl appearance-none">
