@@ -94,3 +94,14 @@ export const auditLogs = pgTable('audit_logs', {
   details: jsonb('details'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
+
+export const investorDistributions = pgTable('investor_distributions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').references(() => tenants.id).notNull(),
+  investorId: uuid('investor_id').references(() => investors.id).notNull(),
+  loanId: uuid('loan_id').references(() => loans.id).notNull(),
+  scheduleId: uuid('schedule_id').references(() => loanSchedules.id).notNull(),
+  amount: decimal('amount', { precision: 12, scale: 2 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+

@@ -48,7 +48,8 @@ export default function InvestmentsPage() {
         const data = await invRes.json();
         setInvestors(data.map((i: any) => ({
           ...i,
-          capital: parseFloat(i.capital || 0)
+          capital: parseFloat(i.capital || 0),
+          earnings: parseFloat(i.earnings || 0)
         })));
       }
       
@@ -110,7 +111,7 @@ export default function InvestmentsPage() {
 
   // Automated Reporting Export
   const exportToCSV = () => {
-    const headers = ["اسم المستثمر", "النوع", "رأس المال (د.ع)", "نسبة المساهمة", "العائد المتوقع (د.ع)", "تاريخ الإضافة"];
+    const headers = ["اسم المستثمر", "النوع", "رأس المال (د.ع)", "الأرباح المحققة (د.ع)", "نسبة المساهمة", "العائد المتوقع (د.ع)", "تاريخ الإضافة"];
     const csvContent = [
       headers.join(","),
       ...filteredInvestors.map(inv => {
@@ -120,6 +121,7 @@ export default function InvestmentsPage() {
           `"${inv.name || 'بدون اسم'}"`,
           inv.type === 'institutional' ? 'مؤسسي' : 'أفراد',
           inv.capital || 0,
+          inv.earnings || 0,
           `"${share.toFixed(2)}%"`,
           expectedYield.toFixed(2),
           inv.createdAt ? new Date(inv.createdAt).toLocaleDateString('ar-IQ') : '-'
@@ -375,6 +377,7 @@ export default function InvestmentsPage() {
                 <th className="p-4 font-normal">نوع المستثمر</th>
                 <th className="p-4 font-normal">رأس المال المُودع</th>
                 <th className="p-4 font-normal">نسبة المساهمة</th>
+                <th className="p-4 font-normal">الأرباح المحققة 💰</th>
                 <th className="p-4 font-normal">العائد المتوقع 🌟</th>
                 <th className="p-4 font-normal">تاريخ الانضمام</th>
                 <th className="p-4 font-normal text-center print:hidden">إجراءات</th>
@@ -455,8 +458,18 @@ export default function InvestmentsPage() {
                         </div>
                       </td>
                       <td className="p-4" dir="ltr">
+                        {(inv.earnings || 0) > 0 ? (
+                          <span className="text-[#10b981] font-bold bg-[#10b981]/10 px-2 py-1 rounded text-xs border border-[#10b981]/20 inline-flex items-center gap-1">
+                            <Coins size={12} />
+                            +{inv.earnings.toLocaleString(undefined, { maximumFractionDigits: 0 })} د.ع
+                          </span>
+                        ) : (
+                          <span className="text-[#737373] text-xs">0 د.ع</span>
+                        )}
+                      </td>
+                      <td className="p-4" dir="ltr">
                         {expectedYield > 0 ? (
-                          <span className="text-[#10b981] font-bold bg-[#10b981]/10 px-2 py-1 rounded text-xs border border-[#10b981]/20 inline-block">
+                          <span className="text-blue-400 font-bold bg-blue-500/10 px-2 py-1 rounded text-xs border border-blue-500/20 inline-block">
                             +{expectedYield.toLocaleString(undefined, { maximumFractionDigits: 0 })} د.ع
                           </span>
                         ) : (
@@ -573,14 +586,36 @@ export default function InvestmentsPage() {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-r from-[#10b981]/10 to-[#1a1a1a] p-4 rounded-xl border border-[#10b981]/30 flex flex-col gap-1.5">
+              {/* 💰 Actual Collected Profits Box */}
+              <div className="bg-gradient-to-r from-[#10b981]/15 to-[#1a1a1a] p-4 rounded-xl border border-[#10b981]/30 flex flex-col gap-1.5">
                 <span className="text-xs text-[#10b981] font-bold flex items-center gap-1.5">
-                  <Sparkles size={15} /> الأرباح والعوائد المتوقعة (مقدراً)
+                  <Coins size={15} /> الأرباح المحققة (الفعلي) 💰
+                </span>
+                <span className="font-mono font-bold text-white text-base" dir="ltr">
+                  +{parseFloat(selectedInvestor.earnings || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })} د.ع
+                </span>
+                <p className="text-[10px] text-[#737373] mt-1">إجمالي الأرباح الفعلية التي تم تحصيلها وتوزيعها على المستثمر من أقساط المقترضين المسددة.</p>
+              </div>
+
+              {/* 🌟 Expected Yield ROI Box */}
+              <div className="bg-[#1a1a1a] p-4 rounded-xl border border-[#262626] flex flex-col gap-1.5">
+                <span className="text-xs text-blue-400 font-bold flex items-center gap-1.5">
+                  <Sparkles size={15} /> العائد المتوقع مقدراً (ROI) 🌟
                 </span>
                 <span className="font-mono font-bold text-white text-base" dir="ltr">
                   +{totalCapital > 0 ? (((selectedInvestor.capital || 0) / totalCapital) * totalExpectedPortfolioProfit).toLocaleString(undefined, { maximumFractionDigits: 0 }) : 0} د.ع
                 </span>
-                <p className="text-[10px] text-[#737373] mt-1">حصة المستثمر المقدرة من عوائد وفوائد القروض الجارية حالياً في النظام.</p>
+                <p className="text-[10px] text-[#737373] mt-1">حصة المستثمر المقدرة من عوائد وفوائد القروض النشطة حالياً في النظام.</p>
+              </div>
+
+              {/* 📈 Total Portfolio Value Box */}
+              <div className="bg-[#1a1a1a] p-4 rounded-xl border border-[#262626] flex justify-between items-center">
+                <span className="text-xs text-[#ededed] font-bold flex items-center gap-1.5">
+                  <TrendingUp size={15} className="text-[#10b981]"/> القيمة الحالية الإجمالية للمحفظة
+                </span>
+                <span className="font-mono font-bold text-white text-sm" dir="ltr">
+                  {((selectedInvestor.capital || 0) + parseFloat(selectedInvestor.earnings || 0)).toLocaleString()} د.ع
+                </span>
               </div>
 
               <div className="bg-[#1a1a1a] p-4 rounded-xl border border-[#262626] flex justify-between items-center">

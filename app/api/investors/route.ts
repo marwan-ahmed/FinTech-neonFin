@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { investors } from '@/schema/schema';
-import { desc, eq } from 'drizzle-orm';
+import { investors, investorDistributions } from '@/schema/schema';
+import { desc, eq, sql } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
 import { z } from 'zod';
@@ -23,9 +23,20 @@ export async function GET(req: Request) {
 
     const conditions = user.role === 'superadmin' ? undefined : eq(investors.tenantId, user.tenantId!);
 
-    const allInvestors = await db.select()
+    const allInvestors = await db.select({
+      id: investors.id,
+      tenantId: investors.tenantId,
+      name: investors.name,
+      capital: investors.capital,
+      type: investors.type,
+      createdAt: investors.createdAt,
+      updatedAt: investors.updatedAt,
+      earnings: sql<string>`COALESCE(SUM(${investorDistributions.amount}), 0)`
+    })
       .from(investors)
+      .leftJoin(investorDistributions, eq(investors.id, investorDistributions.investorId))
       .where(conditions)
+      .groupBy(investors.id)
       .orderBy(desc(investors.createdAt))
       .limit(limit)
       .offset(offset);

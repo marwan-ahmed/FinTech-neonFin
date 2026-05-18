@@ -50,6 +50,7 @@ export default function DashboardClient() {
           invData.map((i: any) => ({
             ...i,
             capital: parseFloat(i.capital || 0),
+            earnings: parseFloat(i.earnings || 0),
           })),
         );
       }
@@ -92,6 +93,7 @@ export default function DashboardClient() {
             invData.map((i: any) => ({
               ...i,
               capital: parseFloat(i.capital || 0),
+              earnings: parseFloat(i.earnings || 0),
             })),
           );
         }

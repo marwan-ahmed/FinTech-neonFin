@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { loans, loanSchedules } from '@/schema/schema';
+import { loans, loanSchedules, investorDistributions, investors } from '@/schema/schema';
 import { eq, and } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
@@ -46,6 +46,15 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
       // Fetch the attached schedules inside transaction context
       const schedules = await tx.select().from(loanSchedules).where(eq(loanSchedules.loanId, id)).orderBy(loanSchedules.installmentNumber);
 
+      // ── 5.1: Profit Share Calculations Setup ────────────────────────
+      const totalDebtVal = parseFloat(loan.totalDebt.toString());
+      const assetValueVal = parseFloat(loan.assetValue.toString());
+      const totalProfit = Math.max(0, totalDebtVal - assetValueVal);
+
+      // Fetch all investors for this tenant inside the transaction
+      const tenantInvestors = await tx.select().from(investors).where(eq(investors.tenantId, user.tenantId!));
+      const totalCapital = tenantInvestors.reduce((sum, inv) => sum + parseFloat(inv.capital.toString()), 0);
+
       if (body.action === 'pay_installment') {
           const { installmentNumber, paidAmount } = body;
           const targetSchedule = schedules.find(s => s.installmentNumber === installmentNumber);
@@ -68,13 +77,54 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
               await tx.update(loanSchedules)
                       .set({ status: updatedStatus, paidAmount: totalPaidNow.toString(), paidAt: newPaidAt, updatedAt: new Date() })
                       .where(eq(loanSchedules.id, targetSchedule.id));
+
+              // 🌟 Dynamic Profit Distribution Engine
+              if (totalProfit > 0 && totalDebtVal > 0 && totalCapital > 0 && paymentAmount > 0) {
+                const paymentProfit = (paymentAmount / totalDebtVal) * totalProfit;
+                for (const inv of tenantInvestors) {
+                  const share = parseFloat(inv.capital.toString()) / totalCapital;
+                  const investorProfitShare = paymentProfit * share;
+                  if (investorProfitShare > 0) {
+                    await tx.insert(investorDistributions).values({
+                      tenantId: user.tenantId!,
+                      investorId: inv.id,
+                      loanId: id,
+                      scheduleId: targetSchedule.id,
+                      amount: investorProfitShare.toFixed(2),
+                      createdAt: new Date()
+                    });
+                  }
+                }
+              }
           }
       } else if (body.action === 'clear_loan') {
           const pendingSchedules = schedules.filter(s => s.status === 'pending' || s.status === 'late');
           for (const s of pendingSchedules) {
+              const currentPaidAmount = parseFloat(s.paidAmount?.toString() || '0');
+              const schedulePaymentAmount = Math.max(0, parseFloat(s.amount.toString()) - currentPaidAmount);
+
               await tx.update(loanSchedules)
                   .set({ status: 'paid', paidAmount: s.amount.toString(), paidAt: new Date(), updatedAt: new Date() })
                   .where(eq(loanSchedules.id, s.id));
+
+              // 🌟 Dynamic Profit Distribution Engine for clear_loan
+              if (totalProfit > 0 && totalDebtVal > 0 && totalCapital > 0 && schedulePaymentAmount > 0) {
+                const paymentProfit = (schedulePaymentAmount / totalDebtVal) * totalProfit;
+                for (const inv of tenantInvestors) {
+                  const share = parseFloat(inv.capital.toString()) / totalCapital;
+                  const investorProfitShare = paymentProfit * share;
+                  if (investorProfitShare > 0) {
+                    await tx.insert(investorDistributions).values({
+                      tenantId: user.tenantId!,
+                      investorId: inv.id,
+                      loanId: id,
+                      scheduleId: s.id,
+                      amount: investorProfitShare.toFixed(2),
+                      createdAt: new Date()
+                    });
+                  }
+                }
+              }
           }
       }
 
