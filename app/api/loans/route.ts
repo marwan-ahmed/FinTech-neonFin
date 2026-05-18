@@ -65,42 +65,47 @@ export async function POST(req: Request) {
     
     const data = validationResult.data;
 
-    const result = await db.insert(loans).values({
-      tenantId: user.tenantId,
-      borrowerName: data.borrowerName,
-      phone: data.phone || null,
-      address: data.address || null,
-      job: data.job || null,
-      assetValue: parseFloat(data.assetValue.toString()).toFixed(2),
-      totalDebt: parseFloat(data.totalDebt.toString()).toFixed(2),
-      tenure: data.tenure,
-      marketCardValue: data.marketCardValue ? parseFloat(data.marketCardValue.toString()).toFixed(2) : null,
-      saleCardValue: data.saleCardValue ? parseFloat(data.saleCardValue.toString()).toFixed(2) : null,
-      score: data.score,
-      status: data.status,
-      nextDue: data.nextDue,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }).returning();
+    // 🔒 3.2: استخدام المعاملات (Database Transactions) لمنع تفتت البيانات وضمان متانة الإدخال
+    const result = await db.transaction(async (tx) => {
+      const res = await tx.insert(loans).values({
+        tenantId: user.tenantId!,
+        borrowerName: data.borrowerName,
+        phone: data.phone || null,
+        address: data.address || null,
+        job: data.job || null,
+        assetValue: parseFloat(data.assetValue.toString()).toFixed(2),
+        totalDebt: parseFloat(data.totalDebt.toString()).toFixed(2),
+        tenure: data.tenure,
+        marketCardValue: data.marketCardValue ? parseFloat(data.marketCardValue.toString()).toFixed(2) : null,
+        saleCardValue: data.saleCardValue ? parseFloat(data.saleCardValue.toString()).toFixed(2) : null,
+        score: data.score,
+        status: data.status,
+        nextDue: data.nextDue,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }).returning();
+      
+      // إدراج جدول الأقساط بشكل متزامن داخل المعاملة
+      if (data.schedule && data.schedule.length > 0) {
+        await tx.insert(loanSchedules).values(
+          data.schedule.map((sch: any, idx: number) => ({
+            tenantId: user.tenantId!,
+            loanId: res[0].id,
+            installmentNumber: sch.installmentNumber || idx + 1,
+            dueDate: sch.dueDate,
+            amount: parseFloat(sch.amount).toFixed(2),
+            paidAmount: '0',
+            status: 'pending' as const,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          }))
+        );
+      }
+
+      return res;
+    });
     
-    // Insert schedules if any
-    if (data.schedule && data.schedule.length > 0) {
-      await db.insert(loanSchedules).values(
-        data.schedule.map((sch: any, idx: number) => ({
-          tenantId: user.tenantId!,
-          loanId: result[0].id,
-          installmentNumber: sch.installmentNumber || idx + 1,
-          dueDate: sch.dueDate,
-          amount: parseFloat(sch.amount).toFixed(2),
-          paidAmount: '0',
-          status: 'pending' as const,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }))
-      );
-    }
-    
-    // Log this action
+    // تسجيل المعاملة في مركز المراقبة
     await logAudit({
       tenantId: user.tenantId,
       userId: user.id,

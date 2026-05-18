@@ -29,8 +29,13 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
       return NextResponse.json({ error: 'Loan not found' }, { status: 404 });
     }
     
+    // 🔒 3.1: عزل المستأجرين لمنع الاختراق البيني للبيانات (Defense-in-depth isolation)
+    const scheduleConditions = user.role === 'superadmin'
+        ? eq(loanSchedules.loanId, id)
+        : and(eq(loanSchedules.loanId, id), eq(loanSchedules.tenantId, user.tenantId!));
+
     // Fetch attached schedules
-    const schedules = await db.select().from(loanSchedules).where(eq(loanSchedules.loanId, id)).orderBy(loanSchedules.installmentNumber);
+    const schedules = await db.select().from(loanSchedules).where(scheduleConditions).orderBy(loanSchedules.installmentNumber);
 
     const loanWithSchedules = {
         ...result[0],
@@ -109,15 +114,17 @@ export async function DELETE(req: Request, context: { params: Promise<{ id: stri
       return NextResponse.json({ error: 'Loan not found' }, { status: 404 });
     }
 
-    // 1. Delete associated schedules first to prevent foreign key errors (with Defense-in-Depth validation)
-    const scheduleConditions = user.role === 'superadmin'
-        ? eq(loanSchedules.loanId, id)
-        : and(eq(loanSchedules.loanId, id), eq(loanSchedules.tenantId, user.tenantId));
-        
-    await db.delete(loanSchedules).where(scheduleConditions);
+    // 🔒 3.2: استخدام المعاملات (Database Transactions) لضمان موثوقية الحذف المتزامن ومنع الأخطاء المتقاطعة
+    await db.transaction(async (tx) => {
+      const scheduleConditions = user.role === 'superadmin'
+          ? eq(loanSchedules.loanId, id)
+          : and(eq(loanSchedules.loanId, id), eq(loanSchedules.tenantId, user.tenantId!));
+          
+      await tx.delete(loanSchedules).where(scheduleConditions);
 
-    // 2. Delete the primary loan record
-    await db.delete(loans).where(conditions);
+      // 2. Delete the primary loan record
+      await tx.delete(loans).where(conditions);
+    });
 
     await logAudit({
       tenantId: user.tenantId,
