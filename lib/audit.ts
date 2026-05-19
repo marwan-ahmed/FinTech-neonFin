@@ -2,7 +2,7 @@ import { db } from './db';
 import { auditLogs } from '@/schema/schema';
 
 type AuditLogParams = {
-  tenantId: string;
+  tenantId: string | null | undefined;
   userId?: string | null;
   action: string;
   entityType: string;
@@ -15,6 +15,8 @@ type AuditLogParams = {
  * بدون التأثير على سير العمل الأساسي في حالة حدوث خطأ
  */
 export async function logAudit({ tenantId, userId, action, entityType, entityId, details }: AuditLogParams) {
+  if (!tenantId) return; // Fallback for superadmin without a specific tenant
+
   try {
     await db.insert(auditLogs).values({
       tenantId,
