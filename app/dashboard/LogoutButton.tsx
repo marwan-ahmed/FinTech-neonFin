@@ -1,12 +1,20 @@
 'use client';
 
 import { LogOut } from 'lucide-react';
+import { signOut } from 'firebase/auth';
+import { getFirebaseAuth } from '@/lib/firebase';
 
 export default function LogoutButton() {
   const handleLogout = async () => {
     try {
+      // 1. Sign out from Firebase Client Auth to clear tokens in browser memory
+      const auth = getFirebaseAuth();
+      await signOut(auth);
+
+      // 2. Clear server-side session cookie by hitting our API endpoint
       await fetch('/api/auth', { method: 'DELETE' });
-      // Force a full page reload to clear Next.js client-side router caches
+
+      // 3. Force a full page reload to clear client-side caches and redirect to landing
       window.location.href = '/';
     } catch (error) {
       console.error('Logout failed:', error);

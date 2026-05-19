@@ -172,7 +172,7 @@ export default function LandingPage() {
             </div>
             <h3 className="text-lg font-bold text-white mb-2 group-hover:text-[#10b981] transition-colors">طلبات التحقق (KYC)</h3>
             <p className="text-xs text-[#737373] leading-relaxed">
-              متابعة طلبات "اعرف عميلك" وتحديد مستويات المخاطر للعملاء وتقييم الملفات القانونية والتراخيص المطلوبة قبل منح التمويلات.
+              متابعة طلبات &quot;اعرف عميلك&quot; وتحديد مستويات المخاطر للعملاء وتقييم الملفات القانونية والتراخيص المطلوبة قبل منح التمويلات.
             </p>
           </div>
 
