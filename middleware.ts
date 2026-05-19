@@ -25,7 +25,7 @@ export async function middleware(request: NextRequest) {
 
           ratelimit = new Ratelimit({
             redis: redis,
-            limiter: Ratelimit.slidingWindow(100, "1 m"),
+            limiter: Ratelimit.slidingWindow(60, "1 m"),
           });
         }
 
