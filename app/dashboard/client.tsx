@@ -157,8 +157,7 @@ export default function DashboardClient() {
   const totalPaid = loans.reduce((acc, loan) => {
     if (!loan.schedule || !Array.isArray(loan.schedule)) return acc;
     const paidInLoan = loan.schedule
-      .filter((s: any) => s.status === "paid")
-      .reduce((sum: number, s: any) => sum + (parseFloat(s.amount) || 0), 0);
+      .reduce((sum: number, s: any) => sum + (parseFloat(s.paidAmount || '0') || 0), 0);
     return acc + paidInLoan;
   }, 0);
   const outstandingDebt = totalDebt > 0 ? totalDebt - totalPaid : 0;

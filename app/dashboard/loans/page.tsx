@@ -38,8 +38,7 @@ export default function LoansPage() {
             // Calculate paid amount from schedule
             const schedule = l.schedule || [];
             const paidAmount = schedule
-              .filter((s: any) => s.status === 'paid')
-              .reduce((sum: number, s: any) => sum + (parseFloat(s.amount) || 0), 0);
+              .reduce((sum: number, s: any) => sum + (parseFloat(s.paidAmount || '0') || 0), 0);
             
             const remainingAmount = totalDebt - paidAmount;
             

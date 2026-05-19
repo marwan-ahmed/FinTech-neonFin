@@ -71,8 +71,9 @@ export default function BorrowerProfilePage() {
       schedule.forEach((s: any) => {
         totalInstallments++;
         const amt = parseFloat(s.amount || 0);
+        const paidAmt = parseFloat(s.paidAmount || 0);
+        totalPaid += paidAmt;
         if (s.status === 'paid') {
-          totalPaid += amt;
           // إذا دفع قبل أو في تاريخ الاستحقاق يعتبر في الوقت
           if (s.paidAt && new Date(s.paidAt) <= new Date(s.dueDate)) {
             paidOnTime++;
