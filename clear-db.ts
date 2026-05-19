@@ -51,6 +51,9 @@ async function clearDb() {
     console.log("\n❌ ======================================= ❌");
     console.log("🔴 FAILED: فشل تصفير قاعدة البيانات!");
     console.log("📝 تفاصيل الخطأ:", error.message || error);
+    if (error.code) console.log("🔑 رمز الخطأ (Code):", error.code);
+    if (error.detail) console.log("📌 تفاصيل إضافية (Detail):", error.detail);
+    if (error.hint) console.log("💡 تلميح (Hint):", error.hint);
     console.log("❌ ======================================= ❌\n");
   }
   process.exit(0);

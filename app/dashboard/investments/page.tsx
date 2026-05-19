@@ -149,33 +149,10 @@ export default function InvestmentsPage() {
         <div>
           <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
             <span>محافظ الاستثمار</span>
-            <span className="text-xs font-mono bg-[#10b981]/10 text-[#10b981] border border-[#10b981]/20 px-2.5 py-0.5 rounded-full">
-              فاخر (Premium)
-            </span>
           </h2>
           <p className="text-sm text-[#737373] mt-1">إدارة رؤوس أموال المستثمرين وتتبع المحافظ الاستثمارية مع محاكاة العوائد المتوقعة.</p>
         </div>
         <div className="flex gap-2">
-          {investors.length === 0 && !loading && (
-            <button 
-              onClick={() => {
-                setInvestors([
-                  { id: '1', name: 'شركة أفق للتجارة', type: 'institutional', capital: 50000000, createdAt: new Date(Date.now() - 30 * 86400000) },
-                  { id: '2', name: 'أحمد محمود', type: 'retail', capital: 15000000, createdAt: new Date(Date.now() - 15 * 86400000) },
-                  { id: '3', name: 'مؤسسة الرواد', type: 'institutional', capital: 120000000, createdAt: new Date(Date.now() - 60 * 86400000) },
-                  { id: '4', name: 'سالم عبدالله', type: 'retail', capital: 5000000, createdAt: new Date() }
-                ]);
-                setLoans([
-                  { id: 'l1', borrowerId: 'b1', totalDebt: 55000000, assetValue: 45000000, status: 'active', score: 'A', nextDue: new Date(Date.now() + 5 * 86400000) },
-                  { id: 'l2', borrowerId: 'b2', totalDebt: 25000000, assetValue: 25000000, status: 'defaulted', score: 'C', nextDue: new Date(Date.now() - 10 * 86400000) },
-                  { id: 'l3', borrowerId: 'b3', totalDebt: 12000000, assetValue: 10000000, status: 'active', score: 'B', nextDue: new Date(Date.now() + 2 * 86400000) }
-                ]);
-              }}
-              className="bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-400 font-bold py-2 px-4 rounded transition-colors text-sm"
-            >
-              توليد بيانات تجريبية (للعرض)
-            </button>
-          )}
           <button 
             onClick={() => setIsAddModalOpen(true)}
             className="bg-[#10b981] hover:bg-[#34d399] text-black font-bold py-2 px-4 rounded transition-transform active:scale-95 duration-150 flex items-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.2)]"
