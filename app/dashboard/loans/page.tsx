@@ -27,6 +27,12 @@ export default function LoansPage() {
         const res = await fetch('/api/loans', { signal: controller.signal });
         clearTimeout(timeoutId);
         if (!active) return;
+        
+        if (res.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
+
         if (!res.ok) {
            setError('تأكد من ضبط متغيرات البيئة (Firebase Admin) في الإعدادات');
         } else {

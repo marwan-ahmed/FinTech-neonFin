@@ -27,6 +27,10 @@ export default function AuditLogsPage() {
     try {
       setLoading(true);
       const res = await fetch('/api/audit-logs');
+      if (res.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
       if (!res.ok) throw new Error('فشل جلب سجل المراقبة');
       const data = await res.json();
       setLogs(data);

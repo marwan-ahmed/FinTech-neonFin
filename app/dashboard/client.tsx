@@ -74,6 +74,13 @@ export default function DashboardClient() {
         ]);
         clearTimeout(timeoutId);
         if (!active) return;
+        
+        // If the session has expired or is unauthorized, force-redirect to login
+        if (loansRes.status === 401 || investorsRes.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
+
         if (!loansRes.ok || !investorsRes.ok) {
           setError("تأكد من ضبط متغيرات البيئة (Firebase Admin) في الإعدادات");
         }

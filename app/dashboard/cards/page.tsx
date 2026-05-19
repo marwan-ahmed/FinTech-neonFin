@@ -37,6 +37,11 @@ export default function CardsInventoryPage() {
         fetch('/api/loans')
       ]);
 
+      if (batchesRes.status === 401 || investorsRes.status === 401 || loansRes.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
+
       if (batchesRes.ok) {
         const batchesData = await batchesRes.json();
         setBatches(batchesData.map((b: any) => ({

@@ -30,6 +30,10 @@ export default function BorrowerProfilePage() {
     async function fetchLoans() {
       try {
         const res = await fetch('/api/loans');
+        if (res.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
         if (!res.ok) throw new Error('فشل في تحميل البيانات');
         const data = await res.json();
         if (active) setAllLoans(data);

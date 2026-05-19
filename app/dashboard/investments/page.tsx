@@ -44,6 +44,11 @@ export default function InvestmentsPage() {
         fetch('/api/loans')
       ]);
       
+      if (invRes.status === 401 || loansRes.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
+      
       if (invRes.ok) {
         const data = await invRes.json();
         setInvestors(data.map((i: any) => ({

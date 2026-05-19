@@ -28,6 +28,10 @@ export default function ReportsPage() {
     const fetchLoans = async () => {
       try {
         const res = await fetch("/api/loans");
+        if (res.status === 401) {
+          window.location.href = '/login';
+          return;
+        }
         if (!res.ok) throw new Error("فشل في جلب البيانات");
         const data = await res.json();
         if (active) setLoans(data);

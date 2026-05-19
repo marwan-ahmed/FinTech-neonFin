@@ -1,15 +1,13 @@
 'use client';
 
 import { LogOut } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 
 export default function LogoutButton() {
-  const router = useRouter();
-
   const handleLogout = async () => {
     try {
       await fetch('/api/auth', { method: 'DELETE' });
-      router.push('/');
+      // Force a full page reload to clear Next.js client-side router caches
+      window.location.href = '/';
     } catch (error) {
       console.error('Logout failed:', error);
     }

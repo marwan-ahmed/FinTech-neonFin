@@ -32,6 +32,10 @@ export default function LoanDetailsPage({ params }: { params: Promise<{ id: stri
   const fetchLoan = async () => {
     try {
       const res = await fetch(`/api/loans/${loanId}`);
+      if (res.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
       if (res.ok) {
         const data = await res.json();
         // parse fields

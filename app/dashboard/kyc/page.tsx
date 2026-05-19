@@ -78,6 +78,10 @@ export default function KYCPage() {
     setLoading(true);
     try {
       const res = await fetch('/api/kyc');
+      if (res.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
       if (res.ok) {
         const data = await res.json();
         setApplications(data);
