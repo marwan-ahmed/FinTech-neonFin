@@ -79,7 +79,7 @@ export default function LandingPage() {
             href="/dashboard"
             className="w-full sm:w-auto bg-gradient-to-r from-[#10b981] to-[#059669] text-black font-bold py-3.5 px-8 rounded-xl text-base transition-transform active:scale-95 shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:shadow-[0_0_35px_rgba(16,185,129,0.4)] flex justify-center items-center gap-2"
           >
-            <span>ابدأ الآن مجاناً</span>
+            <span>ابدأ الآن </span>
             <ArrowLeft size={18} />
           </Link>
           <a 
