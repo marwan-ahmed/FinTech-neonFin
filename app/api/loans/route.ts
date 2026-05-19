@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { loans, loanSchedules, cardBatches } from '@/schema/schema';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, inArray } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
 import { z } from 'zod';
@@ -47,7 +47,33 @@ export async function GET(req: Request) {
     }
     
     const allLoans = await query.orderBy(desc(loans.createdAt)).limit(limit).offset(offset);
-    return NextResponse.json(allLoans);
+    
+    if (allLoans.length > 0) {
+      const loanIds = allLoans.map(l => l.id);
+      
+      // Batch fetch all schedules for the loaded loans using index
+      const allSchedules = await db.select()
+        .from(loanSchedules)
+        .where(inArray(loanSchedules.loanId, loanIds))
+        .orderBy(loanSchedules.installmentNumber);
+        
+      // Group schedules by loanId in O(N) time complexity
+      const schedulesByLoanId = allSchedules.reduce((acc, sch) => {
+        if (!acc[sch.loanId]) acc[sch.loanId] = [];
+        acc[sch.loanId].push(sch);
+        return acc;
+      }, {} as Record<string, any[]>);
+      
+      // Attach mapped schedules directly to response objects
+      const loansWithSchedules = allLoans.map(l => ({
+        ...l,
+        schedule: schedulesByLoanId[l.id] || []
+      }));
+      
+      return NextResponse.json(loansWithSchedules);
+    }
+    
+    return NextResponse.json([]);
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: 'Failed to fetch loans' }, { status: 500 });

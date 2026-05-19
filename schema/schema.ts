@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, decimal, integer, uuid, pgEnum, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, decimal, integer, uuid, pgEnum, jsonb, index } from 'drizzle-orm/pg-core';
 
 export const investorTypeEnum = pgEnum('investor_type', ['retail', 'institutional']);
 export const loanStatusEnum = pgEnum('loan_status', ['pending', 'approved', 'active', 'completed', 'defaulted']);
@@ -21,7 +21,9 @@ export const users = pgTable('users', {
   phoneNumber: text('phone_number'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+}, (table) => [
+  index('users_tenant_idx').on(table.tenantId)
+]);
 
 export const investors = pgTable('investors', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -31,7 +33,10 @@ export const investors = pgTable('investors', {
   type: investorTypeEnum('type').default('retail').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+}, (table) => [
+  index('investors_tenant_idx').on(table.tenantId),
+  index('investors_created_at_idx').on(table.createdAt)
+]);
 
 export const cardBatches = pgTable('card_batches', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -43,7 +48,9 @@ export const cardBatches = pgTable('card_batches', {
   totalCost: decimal('total_cost', { precision: 12, scale: 2 }).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+}, (table) => [
+  index('card_batches_tenant_idx').on(table.tenantId)
+]);
 
 export const loans = pgTable('loans', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -70,9 +77,12 @@ export const loans = pgTable('loans', {
   nextDue: timestamp('next_due'),
   
   createdAt: timestamp('created_at').defaultNow().notNull(),
-
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+}, (table) => [
+  index('loans_tenant_idx').on(table.tenantId),
+  index('loans_status_idx').on(table.status),
+  index('loans_borrower_name_idx').on(table.borrowerName)
+]);
 
 export const kycApplications = pgTable('kyc_applications', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -82,8 +92,10 @@ export const kycApplications = pgTable('kyc_applications', {
   status: text('status').default('pending').notNull(),
   riskLevel: text('risk_level').default('low').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
-
+}, (table) => [
+  index('kyc_applications_tenant_idx').on(table.tenantId),
+  index('kyc_applications_status_idx').on(table.status)
+]);
 
 export const loanScheduleEnum = pgEnum('schedule_status', ['pending', 'paid', 'late', 'defaulted']);
 
@@ -99,7 +111,12 @@ export const loanSchedules = pgTable('loan_schedules', {
   paidAt: timestamp('paid_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+}, (table) => [
+  index('loan_schedules_tenant_idx').on(table.tenantId),
+  index('loan_schedules_loan_idx').on(table.loanId),
+  index('loan_schedules_status_idx').on(table.status),
+  index('loan_schedules_due_date_idx').on(table.dueDate)
+]);
 
 export const auditLogs = pgTable('audit_logs', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -110,7 +127,10 @@ export const auditLogs = pgTable('audit_logs', {
   entityId: text('entity_id').notNull(),
   details: jsonb('details'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+}, (table) => [
+  index('audit_logs_tenant_idx').on(table.tenantId),
+  index('audit_logs_created_at_idx').on(table.createdAt)
+]);
 
 export const investorDistributions = pgTable('investor_distributions', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -120,5 +140,9 @@ export const investorDistributions = pgTable('investor_distributions', {
   scheduleId: uuid('schedule_id').references(() => loanSchedules.id).notNull(),
   amount: decimal('amount', { precision: 12, scale: 2 }).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
-
+}, (table) => [
+  index('investor_distributions_tenant_idx').on(table.tenantId),
+  index('investor_distributions_investor_idx').on(table.investorId),
+  index('investor_distributions_loan_idx').on(table.loanId),
+  index('investor_distributions_schedule_idx').on(table.scheduleId)
+]);
