@@ -4,6 +4,7 @@ import { loans, loanSchedules, cardBatches } from '@/schema/schema';
 import { desc, eq, inArray } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
+import { tenantCondition } from '@/lib/tenant';
 import { z } from 'zod';
 
 const loanSchema = z.object({
@@ -41,9 +42,9 @@ export async function GET(req: Request) {
 
     let query = db.select().from(loans);
     
-    // If superadmin, return all. Otherwise return only tenant's loans.
-    if (user.role !== 'superadmin') {
-       query = query.where(eq(loans.tenantId, user.tenantId!)) as any;
+    const tCond = tenantCondition(loans.tenantId, user);
+    if (tCond) {
+       query = query.where(tCond) as any;
     }
     
     const allLoans = await query.orderBy(desc(loans.createdAt)).limit(limit).offset(offset);

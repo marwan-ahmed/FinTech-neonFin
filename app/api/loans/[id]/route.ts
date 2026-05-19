@@ -4,6 +4,7 @@ import { loans, loanSchedules } from '@/schema/schema';
 import { eq, and } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
+import { tenantAndCondition } from '@/lib/tenant';
 import { z } from 'zod';
 
 const editLoanSchema = z.object({
@@ -20,9 +21,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const conditions = user.role === 'superadmin' 
-        ? eq(loans.id, id)
-        : and(eq(loans.id, id), eq(loans.tenantId, user.tenantId!));
+    const conditions = tenantAndCondition(loans.tenantId, user, eq(loans.id, id));
 
     const result = await db.select().from(loans).where(conditions).limit(1);
     if (result.length === 0) {
@@ -30,9 +29,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
     }
     
     // 🔒 3.1: عزل المستأجرين لمنع الاختراق البيني للبيانات (Defense-in-depth isolation)
-    const scheduleConditions = user.role === 'superadmin'
-        ? eq(loanSchedules.loanId, id)
-        : and(eq(loanSchedules.loanId, id), eq(loanSchedules.tenantId, user.tenantId!));
+    const scheduleConditions = tenantAndCondition(loanSchedules.tenantId, user, eq(loanSchedules.loanId, id));
 
     // Fetch attached schedules
     const schedules = await db.select().from(loanSchedules).where(scheduleConditions).orderBy(loanSchedules.installmentNumber);
@@ -53,11 +50,9 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
   const { id } = await context.params;
   try {
     const user = await getCurrentUser();
-    if (!user || !user.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user || (!user.tenantId && user.role !== 'superadmin')) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const conditions = user.role === 'superadmin' 
-        ? eq(loans.id, id)
-        : and(eq(loans.id, id), eq(loans.tenantId, user.tenantId));
+    const conditions = tenantAndCondition(loans.tenantId, user, eq(loans.id, id));
 
     const existing = await db.select().from(loans).where(conditions).limit(1);
     if (existing.length === 0) {
@@ -103,11 +98,9 @@ export async function DELETE(req: Request, context: { params: Promise<{ id: stri
   const { id } = await context.params;
   try {
     const user = await getCurrentUser();
-    if (!user || !user.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user || (!user.tenantId && user.role !== 'superadmin')) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const conditions = user.role === 'superadmin' 
-        ? eq(loans.id, id)
-        : and(eq(loans.id, id), eq(loans.tenantId, user.tenantId));
+    const conditions = tenantAndCondition(loans.tenantId, user, eq(loans.id, id));
 
     const existing = await db.select().from(loans).where(conditions).limit(1);
     if (existing.length === 0) {
@@ -116,9 +109,7 @@ export async function DELETE(req: Request, context: { params: Promise<{ id: stri
 
     // 🔒 3.2: استخدام المعاملات (Database Transactions) لضمان موثوقية الحذف المتزامن ومنع الأخطاء المتقاطعة
     await db.transaction(async (tx) => {
-      const scheduleConditions = user.role === 'superadmin'
-          ? eq(loanSchedules.loanId, id)
-          : and(eq(loanSchedules.loanId, id), eq(loanSchedules.tenantId, user.tenantId!));
+      const scheduleConditions = tenantAndCondition(loanSchedules.tenantId, user, eq(loanSchedules.loanId, id));
           
       await tx.delete(loanSchedules).where(scheduleConditions);
 

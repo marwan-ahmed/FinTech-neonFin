@@ -4,6 +4,7 @@ import { loans, loanSchedules, investorDistributions, investors } from '@/schema
 import { eq, and } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
+import { tenantAndCondition, tenantCondition } from '@/lib/tenant';
 import { z } from 'zod';
 
 const updateSchema = z.object({
@@ -23,9 +24,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const conditions = user.role === 'superadmin' 
-        ? eq(loans.id, id)
-        : and(eq(loans.id, id), eq(loans.tenantId, user.tenantId!));
+    const conditions = tenantAndCondition(loans.tenantId, user, eq(loans.id, id));
 
     const result = await db.select().from(loans).where(conditions).limit(1);
     if (result.length === 0) {
@@ -44,7 +43,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     // 🔒 استخدام المعاملات (Database Transactions) لمنع حالات التسابق (Race Conditions)
     const transactionResult = await db.transaction(async (tx) => {
       // Fetch the attached schedules inside transaction context
-      const schedules = await tx.select().from(loanSchedules).where(eq(loanSchedules.loanId, id)).orderBy(loanSchedules.installmentNumber);
+      const schedules = await tx.select().from(loanSchedules).where(tenantAndCondition(loanSchedules.tenantId, user, eq(loanSchedules.loanId, id))).orderBy(loanSchedules.installmentNumber);
 
       // ── 5.1: Profit Share Calculations Setup ────────────────────────
       const totalDebtVal = parseFloat(loan.totalDebt.toString());
@@ -52,7 +51,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
       const totalProfit = Math.max(0, totalDebtVal - assetValueVal);
 
       // Fetch all investors for this tenant inside the transaction
-      const tenantInvestors = await tx.select().from(investors).where(eq(investors.tenantId, user.tenantId!));
+      const tenantInvestors = await tx.select().from(investors).where(tenantCondition(investors.tenantId, user));
       const totalCapital = tenantInvestors.reduce((sum, inv) => sum + parseFloat(inv.capital.toString()), 0);
 
       if (body.action === 'pay_installment') {

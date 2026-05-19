@@ -4,6 +4,7 @@ import { investors, investorDistributions } from '@/schema/schema';
 import { desc, eq, sql } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
+import { tenantCondition } from '@/lib/tenant';
 import { z } from 'zod';
 
 const investorSchema = z.object({
@@ -21,7 +22,7 @@ export async function GET(req: Request) {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const conditions = user.role === 'superadmin' ? undefined : eq(investors.tenantId, user.tenantId!);
+    const conditions = tenantCondition(investors.tenantId, user);
 
     const allInvestors = await db.select({
       id: investors.id,

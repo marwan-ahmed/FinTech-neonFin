@@ -17,6 +17,7 @@ import {
   CheckCircle,
   AlertTriangle,
   Calendar,
+  Printer
 } from 'lucide-react';
 
 export default function BorrowerProfilePage() {
@@ -102,6 +103,109 @@ export default function BorrowerProfilePage() {
   const scoreBg = score === 'C' ? 'bg-[#ef4444]/10 border-[#ef4444]/30' : score === 'B' ? 'bg-[#f59e0b]/10 border-[#f59e0b]/30' : 'bg-[#10b981]/10 border-[#10b981]/30';
   const ScoreIcon = score === 'C' ? TrendingDown : score === 'B' ? Minus : TrendingUp;
 
+  // ── 4.1: Branded PDF Statement Export ──────────────────────────
+  const handlePrintStatement = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const rowsHTML = borrowerLoans.map((loan) => {
+      const loanSchedulesHTML = (loan.schedule || []).map((s: any) => {
+        const amt = parseFloat(s.amount || '0');
+        const paid = parseFloat(s.paidAmount || '0');
+        return `
+          <tr>
+            <td style="padding:10px; border-bottom:1px solid #eee; font-family:monospace; color:#666;">${loan.id.substring(0,6).toUpperCase()}</td>
+            <td style="padding:10px; border-bottom:1px solid #eee;">${new Date(s.dueDate).toLocaleDateString('ar-IQ')}</td>
+            <td style="padding:10px; border-bottom:1px solid #eee; text-align:center;">${s.installmentNumber}</td>
+            <td style="padding:10px; border-bottom:1px solid #eee; font-family:monospace;">${amt.toLocaleString()}</td>
+            <td style="padding:10px; border-bottom:1px solid #eee; font-family:monospace; color:#10b981;">${paid.toLocaleString()}</td>
+            <td style="padding:10px; border-bottom:1px solid #eee; font-weight:bold; color:${s.status === 'paid' ? '#065f46' : paid > 0 ? '#1e40af' : '#991b1b'};">${s.status === 'paid' ? 'مسدد ✓' : (paid > 0 ? 'جزئي' : 'مستحق')}</td>
+          </tr>
+        `;
+      }).join('');
+      return loanSchedulesHTML;
+    }).join('');
+
+    const html = `
+      <html dir="rtl">
+        <head>
+          <title>كشف حساب التسهيلات - ${borrowerName}</title>
+          <style>
+            body { font-family: 'Segoe UI', Tahoma, sans-serif; padding: 40px; color: #1a1a1a; background: #fff; }
+            .watermark { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-30deg); font-size:100px; color:rgba(16,185,129,0.03); font-weight:900; pointer-events:none; z-index:0; letter-spacing:10px; }
+            .header { text-align: center; border-bottom: 3px solid #10b981; padding-bottom: 20px; margin-bottom: 30px; position: relative; z-index: 1; }
+            .header h1 { color: #10b981; margin: 0 0 5px 0; font-size: 32px; letter-spacing: 2px; }
+            .header p { margin: 0; color: #666; font-size: 14px; }
+            .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; position: relative; z-index: 1; }
+            .sum-box { background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center; }
+            .sum-box label { display: block; font-size: 11px; color: #64748b; margin-bottom: 5px; text-transform: uppercase; }
+            .sum-box span { font-size: 18px; font-weight: bold; }
+            table { width: 100%; border-collapse: collapse; text-align: right; font-size: 13px; position: relative; z-index: 1; }
+            th { background: #f1f5f9; padding: 12px 10px; border-bottom: 2px solid #cbd5e1; color: #475569; font-size: 12px; }
+            @media print { body { padding: 20px; } }
+          </style>
+        </head>
+        <body>
+          <div class="watermark">NEONFIN</div>
+          <div class="header">
+            <h1>neonFin</h1>
+            <p>كشف حساب تفصيلي للتسهيلات الائتمانية | Statement of Account</p>
+          </div>
+          
+          <div style="margin-bottom: 20px; font-size: 15px;">
+            <strong>اسم الزبون / المستفيد:</strong> ${borrowerName} <br/>
+            <strong style="color: #666; font-size: 13px;">تاريخ استخراج الكشف: ${new Date().toLocaleDateString('ar-IQ')}</strong>
+          </div>
+
+          <div class="summary">
+            <div class="sum-box">
+              <label>إجمالي التعاملات</label>
+              <span dir="ltr">${stats.totalDebt.toLocaleString()} IQD</span>
+            </div>
+            <div class="sum-box">
+              <label>إجمالي المسدد</label>
+              <span dir="ltr" style="color:#10b981">${stats.totalPaid.toLocaleString()} IQD</span>
+            </div>
+            <div class="sum-box">
+              <label>المتبقي (الذمة)</label>
+              <span dir="ltr" style="color:#ef4444">${Math.max(0, stats.remaining).toLocaleString()} IQD</span>
+            </div>
+            <div class="sum-box">
+              <label>معدل الالتزام (Score)</label>
+              <span dir="ltr" style="color:#3b82f6">${stats.complianceRate}% (${score})</span>
+            </div>
+          </div>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>معرف القرض</th>
+                <th>تاريخ الاستحقاق</th>
+                <th style="text-align:center;">رقم الدفعة</th>
+                <th>قيمة القسط</th>
+                <th>الواصل</th>
+                <th>الحالة</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHTML}
+            </tbody>
+          </table>
+          
+          <div style="margin-top: 50px; text-align: left; font-size: 14px; font-weight: bold; color: #333;">
+            توقيع وختم الإدارة: ................................
+          </div>
+          
+          <script>window.onload = () => window.print();</script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full py-32">
@@ -135,6 +239,10 @@ export default function BorrowerProfilePage() {
           <ScoreIcon size={14} />
           <span>التصنيف: {score}</span>
         </div>
+        <button onClick={handlePrintStatement} className="flex items-center gap-1.5 bg-[#10b981]/10 border border-[#10b981]/30 text-[#10b981] text-xs font-bold px-3 py-2 rounded-lg hover:bg-[#10b981]/20 transition-colors">
+          <Printer size={15} />
+          <span>كشف حساب PDF</span>
+        </button>
       </div>
 
       {/* بطاقة المعلومات الأساسية */}
