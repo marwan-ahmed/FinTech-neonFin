@@ -93,11 +93,9 @@ export default function NewLoanModal({ onClose, onSuccess }: { onClose: () => vo
 
   const cardsCount = isCardDisbursement 
     ? Number(formData.cardsAllocated) || 0 
-    : (Number(formData.cashNeeded) || 0) / marketValue;
+    : Math.ceil((Number(formData.cashNeeded) || 0) / marketValue);
 
-  const cashNeeded = isCardDisbursement
-    ? cardsCount * marketValue
-    : Number(formData.cashNeeded) || 0;
+  const cashNeeded = cardsCount * marketValue;
 
   const totalDebt = cardsCount * saleValue;
   const monthlyInstallment = totalDebt / tenure;
