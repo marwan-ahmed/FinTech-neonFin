@@ -148,6 +148,107 @@ export default function InvestmentsPage() {
     window.print();
   };
 
+  const printInvestorReport = () => {
+    if (!selectedInvestor) return;
+    
+    const w = window.open('', '_blank');
+    if (!w) {
+      alert("يرجى السماح بالنوافذ المنبثقة (Pop-ups) لطباعة التقرير.");
+      return;
+    }
+
+    const sharePercentage = totalCapital > 0 ? (((selectedInvestor.capital || 0) / totalCapital) * 100).toFixed(2) : '0';
+    const expectedYield = totalCapital > 0 ? (((selectedInvestor.capital || 0) / totalCapital) * totalExpectedPortfolioProfit) : 0;
+    const totalValue = (selectedInvestor.capital || 0) + parseFloat(selectedInvestor.earnings || 0);
+
+    w.document.write(`
+      <html dir="rtl">
+      <head>
+        <title>كشف حساب مستثمر - ${selectedInvestor.name}</title>
+        <style>
+          @page { size: A4; margin: 20mm; }
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; color: #1a1a1a; }
+          .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #10b981; padding-bottom: 20px; }
+          .header h1 { margin: 0; color: #10b981; font-size: 28px; }
+          .header p { margin: 5px 0 0 0; color: #737373; font-size: 14px; }
+          
+          .info-grid { display: flex; justify-content: space-between; margin-bottom: 40px; background: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #eee; }
+          .info-col { flex: 1; }
+          .info-col p { margin: 8px 0; font-size: 14px; }
+          .info-col span { font-weight: bold; color: #111; font-size: 15px; }
+          
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+          th, td { border: 1px solid #e5e5e5; padding: 16px; text-align: right; }
+          th { background-color: #f3f4f6; color: #374151; font-weight: 600; font-size: 14px; width: 45%; }
+          td { font-size: 16px; font-weight: bold; }
+          
+          .amount { font-family: monospace; }
+          .highlight { color: #10b981; }
+          
+          .footer { margin-top: 60px; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #eee; padding-top: 20px; }
+          
+          @media print {
+            body { padding: 0; }
+            .header { padding-top: 0; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>كشف حساب مستثمر</h1>
+          <p>تاريخ الإصدار: ${new Date().toLocaleDateString('ar-IQ')} - الوقت: ${new Date().toLocaleTimeString('ar-IQ')}</p>
+        </div>
+        
+        <div class="info-grid">
+          <div class="info-col">
+            <p>اسم المستثمر: <span>${selectedInvestor.name}</span></p>
+            <p>معرف النظام (ID): <span>${selectedInvestor.id}</span></p>
+          </div>
+          <div class="info-col">
+            <p>تاريخ الانضمام: <span>${selectedInvestor.createdAt ? new Date(selectedInvestor.createdAt).toLocaleDateString('ar-IQ') : '-'}</span></p>
+            <p>نوع المستثمر: <span>${selectedInvestor.type === 'institutional' ? 'مؤسسي' : 'أفراد'}</span></p>
+          </div>
+        </div>
+
+        <table>
+          <tbody>
+            <tr>
+              <th>رأس المال المُودع الأساسي</th>
+              <td class="amount">${(selectedInvestor.capital || 0).toLocaleString()} د.ع</td>
+            </tr>
+            <tr>
+              <th>حصة الملكية في المحفظة</th>
+              <td class="amount">${sharePercentage}%</td>
+            </tr>
+            <tr>
+              <th>الأرباح المحققة (التي تم تسليمها)</th>
+              <td class="amount highlight">+${parseFloat(selectedInvestor.earnings || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })} د.ع</td>
+            </tr>
+            <tr>
+              <th>العائد المتوقع مقدراً (مستقبلي)</th>
+              <td class="amount" style="color: #3b82f6;">+${expectedYield.toLocaleString(undefined, { maximumFractionDigits: 0 })} د.ع</td>
+            </tr>
+            <tr style="background-color: #f0fdf4;">
+              <th style="color: #166534; font-size: 16px;">القيمة الإجمالية للمحفظة (الحالية)</th>
+              <td class="amount" style="color: #166534; font-size: 20px;">${totalValue.toLocaleString()} د.ع</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="footer">
+          هذا الكشف صادر إلكترونياً من نظام "نيون فين" ولا يحتاج إلى توقيع.<br>
+          جميع المبالغ المذكورة بالدينار العراقي (IQD).
+        </div>
+      </body>
+      </html>
+    `);
+    w.document.close();
+    
+    setTimeout(() => {
+      w.print();
+    }, 250);
+  };
+
   return (
     <div className="flex flex-col gap-6 h-full pb-10 relative">
       <div className="flex justify-between items-center">
@@ -620,9 +721,7 @@ export default function InvestmentsPage() {
                 <span>تعديل بيانات المستثمر</span>
               </button>
               <button
-                onClick={() => {
-                  window.print();
-                }}
+                onClick={printInvestorReport}
                 className="w-full py-2.5 rounded-lg bg-transparent border border-[#262626] hover:border-[#737373] text-[#737373] hover:text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors"
               >
                 <FileText size={14} />
