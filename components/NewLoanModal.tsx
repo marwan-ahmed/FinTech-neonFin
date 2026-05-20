@@ -455,28 +455,30 @@ export default function NewLoanModal({ onClose, onSuccess }: { onClose: () => vo
                         توضيح الاحتساب المباشر
                       </h4>
                       
-                      <div className="space-y-4">
-                        <div className="flex flex-col sm:flex-row justify-between sm:items-end border-b border-[#10b981]/10 pb-3 gap-1">
-                          <div>
-                            <p className="text-[11px] text-[#737373] mb-1">السلعة المطلوبة للشراء</p>
-                            <p className="font-mono text-lg text-white">{cardsCount.toLocaleString('en-US')}</p>
-                          </div>
-                          <span className="text-xs text-[#10b981]">بطاقة تعبئة</span>
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center border-b border-[#10b981]/10 pb-2">
+                          <p className="text-[11px] text-[#737373]">عدد البطاقات الممنوحة</p>
+                          <p className="font-mono text-sm text-white">{cardsCount.toLocaleString('en-US')} <span className="text-[10px] text-[#10b981] font-sans">بطاقة</span></p>
+                        </div>
+                        
+                        <div className="flex justify-between items-center border-b border-[#10b981]/10 pb-2">
+                          <p className="text-[11px] text-[#737373]">المبلغ الذي سيحصل عليه المقترض</p>
+                          <p className="font-mono text-sm font-bold text-white">{Math.round(cashNeeded).toLocaleString('en-US')} <span className="text-[10px] text-[#10b981] font-sans">دينار</span></p>
                         </div>
 
-                        <div className="flex flex-col sm:flex-row justify-between sm:items-end border-b border-[#10b981]/10 pb-3 gap-1">
-                          <div>
-                            <p className="text-[11px] text-[#737373] mb-1">المديونية (إجمالي السداد)</p>
-                            <p className="font-mono text-xl font-bold text-white tracking-tight">{Math.round(totalDebt).toLocaleString('en-US')}</p>
-                          </div>
-                          <span className="text-xs text-[#10b981]">دينار عراقي</span>
+                        <div className="flex justify-between items-center border-b border-[#10b981]/10 pb-2">
+                          <p className="text-[11px] text-[#737373]">المبلغ الذي سيسدده المقترض</p>
+                          <p className="font-mono text-sm font-bold text-[#ef4444]">{Math.round(totalDebt).toLocaleString('en-US')} <span className="text-[10px] text-[#10b981] font-sans">دينار</span></p>
                         </div>
 
-                        <div className="flex flex-col sm:flex-row justify-between sm:items-end pb-2 gap-1">
-                          <div>
-                            <p className="text-[11px] text-[#737373] mb-1">الدفعة الشهرية المتوقعة</p>
-                            <p className="font-mono text-2xl font-bold text-[#10b981] tracking-tighter">{Math.round(monthlyInstallment).toLocaleString('en-US')}</p>
-                          </div>
+                        <div className="flex justify-between items-center border-b border-[#10b981]/10 pb-2">
+                          <p className="text-[11px] text-[#737373]">عدد الأقساط</p>
+                          <p className="font-mono text-sm font-bold text-white">{tenure} <span className="text-[10px] text-[#10b981] font-sans">قسط</span></p>
+                        </div>
+
+                        <div className="flex justify-between items-center pt-1">
+                          <p className="text-[11px] text-[#737373]">قيمة القسط بالشهر الواحد</p>
+                          <p className="font-mono text-xl font-bold text-[#10b981] tracking-tighter">{Math.round(monthlyInstallment).toLocaleString('en-US')} <span className="text-[10px] text-[#10b981] font-sans">دينار</span></p>
                         </div>
                       </div>
                     </div>
