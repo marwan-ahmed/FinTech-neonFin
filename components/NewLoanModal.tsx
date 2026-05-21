@@ -91,10 +91,7 @@ export default function NewLoanModal({ onClose, onSuccess }: { onClose: () => vo
   const saleValue = Number(formData.saleCardValue) || 0;
   const tenure = Number(formData.tenure) || 1;
 
-  const cardsCount = isCardDisbursement 
-    ? Number(formData.cardsAllocated) || 0 
-    : Math.ceil((Number(formData.cashNeeded) || 0) / marketValue);
-
+  const cardsCount = Number(formData.cardsAllocated) || 0;
   const cashNeeded = cardsCount * marketValue;
 
   const totalDebt = cardsCount * saleValue;
@@ -102,7 +99,25 @@ export default function NewLoanModal({ onClose, onSuccess }: { onClose: () => vo
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    setFormData(prev => {
+      const next = { ...prev, [name]: value };
+      const mValue = Number(next.marketCardValue) || 1;
+
+      if (name === 'cashNeeded') {
+         next.cardsAllocated = Math.ceil((Number(value) || 0) / mValue).toString();
+      } else if (name === 'cardsAllocated') {
+         next.cashNeeded = ((Number(value) || 0) * mValue).toString();
+      } else if (name === 'marketCardValue') {
+         if (next.disbursementType === 'cards') {
+            next.cashNeeded = ((Number(next.cardsAllocated) || 0) * mValue).toString();
+         } else {
+            next.cardsAllocated = Math.ceil((Number(next.cashNeeded) || 0) / mValue).toString();
+         }
+      }
+
+      return next;
+    });
 
     if (name === 'name') {
       const typedName = value.trim().toLowerCase();
@@ -385,41 +400,56 @@ export default function NewLoanModal({ onClose, onSuccess }: { onClose: () => vo
                             ))}
                           </select>
                         </div>
-                        <div>
-                          <label className="text-xs text-[#737373] uppercase mb-1.5 block tracking-wider">عدد البطاقات المراد صرفها للمقترض</label>
-                          <input 
-                            type="number" 
-                            dir="ltr" 
-                            name="cardsAllocated" 
-                            value={formData.cardsAllocated} 
-                            onChange={handleInputChange} 
-                            className="w-full bg-[#141414] border border-[#262626] rounded px-4 py-3 text-white text-left focus:border-[#10b981] outline-none transition-colors font-mono text-lg" 
-                            placeholder="100"
-                          />
-                          {formData.cardBatchId && (() => {
-                            const selected = cardBatches.find(b => b.id === formData.cardBatchId);
-                            if (selected && Number(formData.cardsAllocated) > selected.remainingQuantity) {
-                              return (
-                                <p className="text-xs text-red-500 font-bold mt-1">
-                                  عذراً، الكمية المطلوبة تتجاوز الكمية المتاحة في الوجبة المحددة ({selected.remainingQuantity} كارت).
-                                </p>
-                              );
-                            }
-                            return null;
-                          })()}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-[10px] text-[#737373] uppercase mb-1.5 block tracking-wider">المبلغ الذي يطلبه المستفيد (دينار)</label>
+                            <input 
+                              type="number" 
+                              dir="ltr" 
+                              name="cashNeeded" 
+                              value={formData.cashNeeded} 
+                              onChange={handleInputChange} 
+                              className="w-full bg-[#141414] border border-[#262626] rounded px-4 py-3 text-white text-left focus:border-[#10b981] outline-none transition-colors font-mono text-lg" 
+                              placeholder="500000"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-[#737373] uppercase mb-1.5 block tracking-wider">عدد البطاقات المراد صرفها</label>
+                            <input 
+                              type="number" 
+                              dir="ltr" 
+                              name="cardsAllocated" 
+                              value={formData.cardsAllocated} 
+                              onChange={handleInputChange} 
+                              className="w-full bg-[#141414] border border-[#262626] rounded px-4 py-3 text-white text-left focus:border-[#10b981] outline-none transition-colors font-mono text-lg" 
+                              placeholder="100"
+                            />
+                          </div>
                         </div>
+                        {formData.cardBatchId && (() => {
+                          const selected = cardBatches.find(b => b.id === formData.cardBatchId);
+                          if (selected && Number(formData.cardsAllocated) > selected.remainingQuantity) {
+                            return (
+                              <p className="text-xs text-red-500 font-bold mt-1">
+                                عذراً، الكمية المطلوبة تتجاوز الكمية المتاحة في الوجبة المحددة ({selected.remainingQuantity} كارت).
+                              </p>
+                            );
+                          }
+                          return null;
+                        })()}
                       </div>
                     )}
 
                     <div>
                       <label className="text-xs text-[#737373] uppercase mb-1.5 block tracking-wider">مدة القرض (بالأشهر)</label>
-                      <select name="tenure" value={formData.tenure} onChange={(e) => setFormData(prev => ({...prev, tenure: e.target.value}))} className="w-full bg-[#141414] border border-[#262626] rounded px-4 py-3 text-white focus:border-[#10b981] outline-none transition-colors dir-rtl appearance-none">
+                      <select name="tenure" value={formData.tenure} onChange={handleInputChange} className="w-full bg-[#141414] border border-[#262626] rounded px-4 py-3 text-white focus:border-[#10b981] outline-none transition-colors dir-rtl appearance-none">
                         <option value="1">شهر واحد</option>
                         <option value="2">شهرين</option>
                         <option value="3">3 أشهر</option>
                         <option value="4">4 أشهر</option>
                         <option value="5">5 أشهر</option>
                         <option value="6">6 أشهر</option>
+                        <option value="10">10 أشهر</option>
                         <option value="12">12 شهر (سنة)</option>
                         <option value="18">18 شهر</option>
                         <option value="24">24 شهر (سنتين)</option>
