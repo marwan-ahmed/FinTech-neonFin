@@ -23,13 +23,13 @@ export async function POST(request: Request) {
       where: eq(users.firebaseUid, decodedToken.uid),
     });
 
+    const isSuperAdmin = decodedToken.email === process.env.SUPERADMIN_EMAIL;
+
     if (!existingUser) {
       // For first time users, create a tenant for them, then create their user profile
       const newTenant = await db.insert(tenants).values({
         name: `Organization (${decodedToken.email || decodedToken.uid})`,
       }).returning();
-      
-      const isSuperAdmin = decodedToken.email === process.env.SUPERADMIN_EMAIL;
 
       await db.insert(users).values({
         firebaseUid: decodedToken.uid,
