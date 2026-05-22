@@ -64,12 +64,12 @@ export default async function TenantDetailPage({ params }: PageProps) {
 
   // Stats cards data
   const stats = [
-    { title: 'Users', value: tenantUsersCount.count, icon: Users, color: 'purple' },
-    { title: 'Active Loans', value: tenantLoansCount.count, icon: CreditCard, color: 'orange' },
-    { title: 'Capital Managed', value: `$${capital.toLocaleString()}`, icon: Wallet, color: 'green' },
-    { title: 'Loan Portfolio', value: `$${loanValue.toLocaleString()}`, icon: TrendingUp, color: 'blue' },
-    { title: 'Default Rate', value: `${defaultRate}%`, icon: AlertTriangle, color: parseFloat(defaultRate) > 5 ? 'red' : 'emerald' },
-    { title: 'Pending KYC', value: tenantPendingKyc.count, icon: FileCheck, color: tenantPendingKyc.count > 0 ? 'yellow' : 'emerald' },
+    { title: 'المستخدمين', value: tenantUsersCount.count, icon: Users, color: 'purple' },
+    { title: 'القروض النشطة', value: tenantLoansCount.count, icon: CreditCard, color: 'orange' },
+    { title: 'رأس المال المدار', value: `$${capital.toLocaleString()}`, icon: Wallet, color: 'green' },
+    { title: 'محفظة القروض', value: `$${loanValue.toLocaleString()}`, icon: TrendingUp, color: 'blue' },
+    { title: 'معدل التعثر', value: `${defaultRate}%`, icon: AlertTriangle, color: parseFloat(defaultRate) > 5 ? 'red' : 'emerald' },
+    { title: 'طلبات KYC المعلقة', value: tenantPendingKyc.count, icon: FileCheck, color: tenantPendingKyc.count > 0 ? 'yellow' : 'emerald' },
   ];
 
   const colorMap: Record<string, { bg: string; text: string; border: string }> = {
@@ -91,7 +91,7 @@ export default async function TenantDetailPage({ params }: PageProps) {
           className="inline-flex items-center gap-2 text-sm text-[#737373] hover:text-white transition-colors mb-4"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Platform Overview
+          العودة إلى نظرة عامة على المنصة
         </Link>
 
         <div className="flex items-center gap-4">
@@ -114,7 +114,7 @@ export default async function TenantDetailPage({ params }: PageProps) {
               <span>•</span>
               <span className="flex items-center gap-1.5">
                 <Calendar className="h-3.5 w-3.5" />
-                Registered {tenant.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                تاريخ التسجيل {tenant.createdAt.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })}
               </span>
             </p>
           </div>
@@ -124,10 +124,10 @@ export default async function TenantDetailPage({ params }: PageProps) {
           <div className="bg-[#0f0f0f] border border-[#262626] rounded-xl p-6">
             <h3 className="font-semibold text-lg flex items-center gap-2 mb-4">
               <Activity className="h-5 w-5 text-blue-500" />
-              Security & Access
+              الأمان والوصول
             </h3>
             <p className="text-[#a3a3a3] text-sm mb-6">
-              Control platform access for this specific organization. Frozen organizations cannot login or access APIs.
+              التحكم في وصول هذه المؤسسة إلى المنصة. لا يمكن للمؤسسات المجمدة تسجيل الدخول أو استخدام واجهات برمجة التطبيقات (APIs).
             </p>
             <TenantStatusToggle tenantId={tenant.id} initialStatus={tenant.status} />
           </div>
@@ -167,15 +167,15 @@ export default async function TenantDetailPage({ params }: PageProps) {
           <div className="p-5 border-b border-[#262626] bg-[#141414]">
             <h3 className="font-semibold text-base flex items-center gap-2">
               <Users className="h-4 w-4 text-purple-400" />
-              Users
-              <span className="text-xs text-[#737373] ml-auto">{tenantUsersCount.count} total</span>
+              المستخدمين
+              <span className="text-xs text-[#737373] ml-auto">{tenantUsersCount.count} الإجمالي</span>
             </h3>
           </div>
           <div className="divide-y divide-[#262626]">
             {tenantUsers.length === 0 ? (
               <div className="p-8 text-center text-[#737373]">
                 <Users className="h-6 w-6 mx-auto mb-2 opacity-30" />
-                <p className="text-sm">No users found.</p>
+                <p className="text-sm">لم يتم العثور على مستخدمين.</p>
               </div>
             ) : (
               tenantUsers.map((u) => (
@@ -184,7 +184,7 @@ export default async function TenantDetailPage({ params }: PageProps) {
                     {(u.fullName || u.email || '??').substring(0, 2).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{u.fullName || 'Unnamed'}</p>
+                    <p className="text-sm font-medium text-white truncate">{u.fullName || 'غير مسمى'}</p>
                     <p className="text-xs text-[#737373] truncate">{u.email || '—'}</p>
                   </div>
                   <span className={`text-xs px-2 py-0.5 rounded font-medium ${
@@ -205,15 +205,15 @@ export default async function TenantDetailPage({ params }: PageProps) {
           <div className="p-5 border-b border-[#262626] bg-[#141414]">
             <h3 className="font-semibold text-base flex items-center gap-2">
               <Activity className="h-4 w-4 text-blue-400" />
-              Recent Activity
-              <span className="text-xs text-[#737373] ml-auto">Last 10</span>
+              أحدث النشاطات
+              <span className="text-xs text-[#737373] ml-auto">آخر 10</span>
             </h3>
           </div>
           <div className="divide-y divide-[#262626] max-h-[400px] overflow-y-auto">
             {recentLogs.length === 0 ? (
               <div className="p-8 text-center text-[#737373]">
                 <Activity className="h-6 w-6 mx-auto mb-2 opacity-30" />
-                <p className="text-sm">No activity recorded yet.</p>
+                <p className="text-sm">لم يتم تسجيل أي نشاط بعد.</p>
               </div>
             ) : (
               recentLogs.map((log) => (
@@ -221,11 +221,11 @@ export default async function TenantDetailPage({ params }: PageProps) {
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-white">
                       <span className="font-medium">{log.action}</span>
-                      <span className="text-[#737373]"> on </span>
+                      <span className="text-[#737373]"> على </span>
                       <span className="text-[#a3a3a3]">{log.entityType}</span>
                     </p>
                     <span className="text-xs text-[#525252] flex-shrink-0 ml-3">
-                      {log.createdAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      {log.createdAt.toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' })}
                     </span>
                   </div>
                   <p className="text-xs text-[#525252] mt-0.5 font-mono">{log.entityId.substring(0, 8)}...</p>

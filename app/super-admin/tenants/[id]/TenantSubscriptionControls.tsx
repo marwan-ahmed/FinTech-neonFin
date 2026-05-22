@@ -57,16 +57,16 @@ export default function TenantSubscriptionControls({
     <div className="bg-[#0f0f0f] border border-[#262626] rounded-xl p-6">
       <h3 className="font-semibold text-lg flex items-center gap-2 mb-4">
         <ShieldCheck className="h-5 w-5 text-emerald-500" />
-        Subscription & Approvals
+        الاشتراكات والموافقات
       </h3>
       
       <div className="flex flex-col gap-6">
         {/* Approval section */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border border-[#262626] rounded-lg bg-[#0a0a0a]">
           <div>
-            <h4 className="font-medium text-white">Account Approval</h4>
+            <h4 className="font-medium text-white">الموافقة على الحساب</h4>
             <p className="text-sm text-[#737373]">
-              {status !== 'pending' ? 'This branch is approved and can access the platform.' : 'This branch is pending your approval.'}
+              {status !== 'pending' ? 'هذا الفرع معتمد ويمكنه الوصول إلى المنصة.' : 'هذا الفرع في انتظار موافقتك.'}
             </p>
           </div>
           {status === 'pending' && (
@@ -75,12 +75,12 @@ export default function TenantSubscriptionControls({
               disabled={loading}
               className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
             >
-              Approve Access
+              منح الصلاحية
             </button>
           )}
           {status !== 'pending' && (
             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-500">
-              Approved
+              معتمد
             </span>
           )}
         </div>
@@ -89,17 +89,17 @@ export default function TenantSubscriptionControls({
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border border-[#262626] rounded-lg bg-[#0a0a0a]">
           <div>
             <h4 className="font-medium text-white flex items-center gap-2">
-              Subscription Status: 
+              حالة الاشتراك: 
               <span className={`px-2 py-0.5 rounded text-xs uppercase tracking-wider ${
                 subscriptionStatus === 'active' ? 'bg-emerald-500/10 text-emerald-500' :
                 subscriptionStatus === 'expired' ? 'bg-red-500/10 text-red-500' : 'bg-blue-500/10 text-blue-500'
               }`}>
-                {subscriptionStatus}
+                {subscriptionStatus === 'active' ? 'نشط' : subscriptionStatus === 'expired' ? 'منتهي' : subscriptionStatus}
               </span>
             </h4>
             <p className="text-sm text-[#737373] mt-1 flex items-center gap-2">
               <CalendarClock className="h-4 w-4" />
-              Expires: {subscriptionEndDate ? new Date(subscriptionEndDate).toLocaleDateString() : 'Lifetime / None'}
+              ينتهي في: {subscriptionEndDate ? new Date(subscriptionEndDate).toLocaleDateString() : 'مدى الحياة / غير محدد'}
             </p>
           </div>
           
@@ -110,21 +110,21 @@ export default function TenantSubscriptionControls({
                 onChange={(e) => setDays(Number(e.target.value))}
                 className="bg-[#141414] border border-[#262626] rounded-md px-3 py-2 text-sm text-white"
               >
-                <option value={30}>+30 Days (Monthly)</option>
-                <option value={365}>+365 Days (Annual)</option>
+                <option value={30}>+30 يوم (شهري)</option>
+                <option value={365}>+365 يوم (سنوي)</option>
               </select>
               <button
                 onClick={handleAddDays}
                 disabled={loading}
                 className="px-3 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-md transition-colors"
               >
-                Apply
+                تطبيق
               </button>
               <button
                 onClick={() => setAddingDays(false)}
                 className="px-3 py-2 bg-[#262626] hover:bg-[#333] text-white font-medium rounded-md transition-colors"
               >
-                Cancel
+                إلغاء
               </button>
             </div>
           ) : (
@@ -134,7 +134,7 @@ export default function TenantSubscriptionControls({
                 disabled={loading}
                 className="px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 font-medium rounded-lg transition-colors flex items-center gap-2 border border-blue-500/20"
               >
-                <CreditCard className="h-4 w-4" /> Renew / Extend
+                <CreditCard className="h-4 w-4" /> تجديد / تمديد
               </button>
               {subscriptionStatus !== 'expired' && (
                 <button
@@ -142,7 +142,7 @@ export default function TenantSubscriptionControls({
                   disabled={loading}
                   className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 font-medium rounded-lg transition-colors flex items-center gap-2 border border-red-500/20"
                 >
-                  <Ban className="h-4 w-4" /> Force Expire
+                  <Ban className="h-4 w-4" /> إنهاء الاشتراك
                 </button>
               )}
             </div>
