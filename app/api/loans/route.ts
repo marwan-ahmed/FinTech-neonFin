@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { loans, loanSchedules, cardBatches } from '@/schema/schema';
+import { loans, loanSchedules, cardBatches, tenants } from '@/schema/schema';
 import { desc, eq, inArray, sql } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';

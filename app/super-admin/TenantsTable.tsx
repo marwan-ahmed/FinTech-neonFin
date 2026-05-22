@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Building2, Search, Activity, ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight, Copy, Check } from 'lucide-react';
+import { Building2, Search, Activity, ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight, Copy, Check, Clock, Ban, CheckCircle2 } from 'lucide-react';
 
 export interface TenantRow {
   id: string;

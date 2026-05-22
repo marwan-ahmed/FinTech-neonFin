@@ -22,7 +22,7 @@ export async function verifySession() {
 
     if (dbUser && dbUser.role !== 'superadmin') {
       const tenant = await db.query.tenants.findFirst({
-        where: eq(tenants.id, dbUser.tenantId)
+        where: eq(tenants.id, dbUser.tenantId!)
       });
       if (tenant) {
         if (tenant.status === 'frozen') {
