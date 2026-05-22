@@ -10,37 +10,37 @@ export default function AdminSidebarLinks() {
 
   const navItems = [
     {
-      name: 'Platform Overview',
+      name: 'نظرة عامة',
       href: '/super-admin',
       icon: Activity,
       exact: true,
     },
     {
-      name: 'Tenants Management',
+      name: 'إدارة الفروع والحسابات',
       href: '/super-admin/tenants',
       icon: Building2,
       exact: false,
     },
     {
-      name: 'Global Users',
+      name: 'جميع المستخدمين',
       href: '/super-admin/users',
       icon: Users,
       exact: false,
     },
     {
-      name: 'DB Operations',
+      name: 'عمليات قواعد البيانات',
       href: '/super-admin/database',
       icon: Database,
       exact: false,
     },
     {
-      name: 'System Settings',
+      name: 'إعدادات النظام',
       href: '/super-admin/settings',
       icon: Settings,
       exact: false,
     },
     {
-      name: 'Standard Dashboard',
+      name: 'لوحة التاجر العادية',
       href: '/dashboard',
       icon: Activity,
       exact: false,
@@ -50,7 +50,7 @@ export default function AdminSidebarLinks() {
   return (
     <nav className="grid gap-1.5 px-4">
       <p className="px-3 text-[10px] font-bold uppercase tracking-widest text-[#525252] mb-2 mt-1">
-        System Administration
+        إدارة النظام
       </p>
       
       {navItems.map((item) => {

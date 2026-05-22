@@ -96,7 +96,7 @@ export default async function SuperAdminPage() {
   // ── Stats Card Data ───────────────────────────────────────────
   const statsCards = [
     {
-      title: 'Active Organizations',
+      title: 'الفروع النشطة',
       value: totalTenants.count.toString(),
       icon: Server,
       color: 'blue',
@@ -106,7 +106,7 @@ export default async function SuperAdminPage() {
       valuePrefix: '',
     },
     {
-      title: 'Total Accounts',
+      title: 'إجمالي الحسابات',
       value: totalUsers.count.toString(),
       icon: Users,
       color: 'purple',
@@ -116,7 +116,7 @@ export default async function SuperAdminPage() {
       valuePrefix: '',
     },
     {
-      title: 'Platform Capital',
+      title: 'رأس مال المنصة',
       value: totalPlatformCapital.toLocaleString(),
       icon: Wallet,
       color: 'green',
@@ -126,7 +126,7 @@ export default async function SuperAdminPage() {
       valuePrefix: '$',
     },
     {
-      title: 'Active Loans Value',
+      title: 'قيمة القروض',
       value: totalPlatformLoans.toLocaleString(),
       icon: CreditCard,
       color: 'orange',
@@ -136,7 +136,7 @@ export default async function SuperAdminPage() {
       valuePrefix: '$',
     },
     {
-      title: 'Default Rate',
+      title: 'نسبة التعثر',
       value: `${defaultRate}%`,
       icon: AlertTriangle,
       color: parseFloat(defaultRate) > 5 ? 'red' : 'emerald',
@@ -146,7 +146,7 @@ export default async function SuperAdminPage() {
       valuePrefix: '',
     },
     {
-      title: 'Pending KYC',
+      title: 'طلبات التحقق المعلقة',
       value: pendingKycCount.count.toString(),
       icon: FileCheck,
       color: pendingKycCount.count > 0 ? 'yellow' : 'emerald',
@@ -161,8 +161,8 @@ export default async function SuperAdminPage() {
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="animate-fade-in">
-        <h1 className="text-3xl font-bold tracking-tight">Platform Overview</h1>
-        <p className="text-[#a3a3a3] mt-2">Comprehensive birds-eye view of your FinTech SaaS performance.</p>
+        <h1 className="text-3xl font-bold tracking-tight">نظرة عامة</h1>
+        <p className="text-[#a3a3a3] mt-2">نظرة شاملة على أداء منصة التكنولوجيا المالية الخاصة بك.</p>
       </div>
       
       {/* Stats Grid — 6 cards in 3x2 grid */}

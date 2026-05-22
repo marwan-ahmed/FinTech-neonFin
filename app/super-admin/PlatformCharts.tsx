@@ -47,7 +47,7 @@ export default function PlatformCharts({ growthData, distributionData }: Platfor
     return [
       ...top5,
       {
-        name: 'Others',
+        name: 'أخرى',
         loansCount: otherLoans,
         totalCapital: otherCapital
       }
@@ -85,9 +85,9 @@ export default function PlatformCharts({ growthData, distributionData }: Platfor
           <div>
             <h3 className="font-semibold text-base flex items-center gap-2 text-white">
               <TrendingUp className="h-4 w-4 text-blue-400" />
-              Platform Expansion
+              توسع المنصة
             </h3>
-            <p className="text-xs text-[#737373] mt-0.5">Cumulative SaaS tenants onboarded over time.</p>
+            <p className="text-xs text-[#737373] mt-0.5">إجمالي المشتركين مع مرور الوقت.</p>
           </div>
         </div>
         
@@ -120,7 +120,7 @@ export default function PlatformCharts({ growthData, distributionData }: Platfor
                   contentStyle={{ backgroundColor: '#141414', borderColor: '#262626', borderRadius: '8px' }}
                   itemStyle={{ color: '#fff', fontSize: '12px' }}
                   labelStyle={{ color: '#737373', fontSize: '11px', marginBottom: '4px' }}
-                  formatter={(value: any) => [`${value} tenants`, 'Total Organizations']}
+                  formatter={(value: any) => [`${value} حساب/فرع`, 'إجمالي الفروع/الحسابات']}
                 />
                 <Area 
                   type="monotone" 
@@ -135,7 +135,7 @@ export default function PlatformCharts({ growthData, distributionData }: Platfor
             </ResponsiveContainer>
           ) : (
             <div className="h-full flex items-center justify-center text-sm text-[#525252]">
-              Not enough historical data.
+              لا توجد بيانات تاريخية كافية.
             </div>
           )}
         </div>
@@ -147,9 +147,9 @@ export default function PlatformCharts({ growthData, distributionData }: Platfor
           <div>
             <h3 className="font-semibold text-base flex items-center gap-2 text-white">
               <PieChart className="h-4 w-4 text-emerald-400" />
-              Capital Distribution by Org
+              توزيع رأس المال
             </h3>
-            <p className="text-xs text-[#737373] mt-0.5">Top organizations by total managed capital volume.</p>
+            <p className="text-xs text-[#737373] mt-0.5">أعلى الفروع من حيث إجمالي رأس المال.</p>
           </div>
         </div>
 
@@ -177,7 +177,7 @@ export default function PlatformCharts({ growthData, distributionData }: Platfor
                   contentStyle={{ backgroundColor: '#141414', borderColor: '#262626', borderRadius: '8px' }}
                   itemStyle={{ color: '#fff', fontSize: '12px' }}
                   labelStyle={{ color: '#737373', fontSize: '11px', marginBottom: '4px' }}
-                  formatter={(value: any) => [`$${Number(value).toLocaleString()}`, 'Managed Capital']}
+                  formatter={(value: any) => [`$${Number(value).toLocaleString()}`, 'رأس المال المدار']}
                 />
                 <Bar 
                   dataKey="totalCapital" 
@@ -200,7 +200,7 @@ export default function PlatformCharts({ growthData, distributionData }: Platfor
             </ResponsiveContainer>
           ) : (
             <div className="h-full flex items-center justify-center text-sm text-[#525252]">
-              No organizational capital data.
+              لا توجد بيانات رأس مال كافية.
             </div>
           )}
         </div>

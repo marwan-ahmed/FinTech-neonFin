@@ -93,11 +93,11 @@ export default function TenantsTable({ tenants }: { tenants: TenantRow[] }) {
         <div>
           <h3 className="font-semibold text-lg flex items-center gap-2">
             <Building2 className="h-5 w-5 text-[#a3a3a3]" />
-            Organizations (Tenants)
+            الفروع والحسابات
           </h3>
           <p className="text-sm text-[#737373] mt-1">
-            Full breakdown of registered SaaS spaces. 
-            <span className="text-[#a3a3a3] ml-1">({filtered.length} results)</span>
+            عرض شامل لجميع مساحات العمل المسجلة. 
+            <span className="text-[#a3a3a3] ml-1">({filtered.length} نتيجة)</span>
           </p>
         </div>
 
@@ -105,7 +105,7 @@ export default function TenantsTable({ tenants }: { tenants: TenantRow[] }) {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#737373]" />
           <input
             type="text"
-            placeholder="Search by name or ID..."
+            placeholder="بحث بالاسم أو المعرف..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="w-full sm:w-64 bg-[#0a0a0a] border border-[#262626] text-white text-sm rounded-md pl-9 pr-4 py-2 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-colors placeholder:text-[#525252]"
@@ -120,34 +120,34 @@ export default function TenantsTable({ tenants }: { tenants: TenantRow[] }) {
             <tr>
               <th className="px-6 py-4 font-semibold">
                 <button onClick={() => toggleSort('name')} className="flex items-center gap-1.5 hover:text-white transition-colors">
-                  Tenant Name <SortIcon col="name" activeKey={sortKey} direction={sortDir} />
+                  اسم الفرع <SortIcon col="name" activeKey={sortKey} direction={sortDir} />
                 </button>
               </th>
-              <th className="px-6 py-4 font-semibold">Tenant ID</th>
+              <th className="px-6 py-4 font-semibold">المعرف</th>
               <th className="px-6 py-4 font-semibold">
                 <button onClick={() => toggleSort('usersCount')} className="flex items-center gap-1.5 hover:text-white transition-colors">
-                  Users <SortIcon col="usersCount" activeKey={sortKey} direction={sortDir} />
+                  المستخدمين <SortIcon col="usersCount" activeKey={sortKey} direction={sortDir} />
                 </button>
               </th>
               <th className="px-6 py-4 font-semibold">
                 <button onClick={() => toggleSort('loansCount')} className="flex items-center gap-1.5 hover:text-white transition-colors">
-                  Loans <SortIcon col="loansCount" activeKey={sortKey} direction={sortDir} />
+                  القروض <SortIcon col="loansCount" activeKey={sortKey} direction={sortDir} />
                 </button>
               </th>
               <th className="px-6 py-4 font-semibold">
                 <button onClick={() => toggleSort('totalCapital')} className="flex items-center gap-1.5 hover:text-white transition-colors">
-                  Capital <SortIcon col="totalCapital" activeKey={sortKey} direction={sortDir} />
+                  رأس المال <SortIcon col="totalCapital" activeKey={sortKey} direction={sortDir} />
                 </button>
               </th>
               <th className="px-6 py-4 font-semibold">
-                Status
+                الحالة
               </th>
               <th className="px-6 py-4 font-semibold">
                 <button onClick={() => toggleSort('createdAt')} className="flex items-center gap-1.5 hover:text-white transition-colors">
-                  Created <SortIcon col="createdAt" activeKey={sortKey} direction={sortDir} />
+                  تاريخ التسجيل <SortIcon col="createdAt" activeKey={sortKey} direction={sortDir} />
                 </button>
               </th>
-              <th className="px-6 py-4 font-semibold text-right">Actions</th>
+              <th className="px-6 py-4 font-semibold text-right">الإجراءات</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#262626] text-[#d4d4d4]">
@@ -171,7 +171,7 @@ export default function TenantsTable({ tenants }: { tenants: TenantRow[] }) {
                     </span>
                     <button
                       onClick={() => copyId(tenant.id)}
-                      title="Copy full ID"
+                      title="نسخ المعرف"
                       className="opacity-0 group-hover/row:opacity-100 transition-opacity text-[#525252] hover:text-white"
                     >
                       {copiedId === tenant.id ? (
@@ -210,39 +210,39 @@ export default function TenantsTable({ tenants }: { tenants: TenantRow[] }) {
                     {tenant.status === 'pending' ? (
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
                         <Clock className="w-3.5 h-3.5" />
-                        Pending
+                        معلق
                       </span>
                     ) : tenant.status === 'frozen' ? (
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-red-500/10 text-red-500 border border-red-500/20">
                         <Ban className="w-3.5 h-3.5" />
-                        Frozen
+                        مجمد
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
                         <CheckCircle2 className="w-3.5 h-3.5" />
-                        Active
+                        نشط
                       </span>
                     )}
                     
                     {tenant.subscriptionStatus === 'trial' && (
                       <span className="block mt-1.5 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-500/10 text-blue-500 w-fit">
-                        Trial
+                        تجريبي
                       </span>
                     )}
                     {tenant.subscriptionStatus === 'active' && (
                       <span className="block mt-1.5 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-500/10 text-emerald-500 w-fit">
-                        Active Sub
+                        اشتراك فعال
                       </span>
                     )}
                     {tenant.subscriptionStatus === 'expired' && (
                       <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-500/10 text-red-500 w-fit">
-                        Expired Sub
+                        اشتراك منتهي
                       </span>
                     )}
                     
                     {tenant.subscriptionEndDate && (
                       <span className="text-[10px] text-[#737373] mt-0.5">
-                        Exp: {new Date(tenant.subscriptionEndDate).toLocaleDateString()}
+                        الانتهاء: {new Date(tenant.subscriptionEndDate).toLocaleDateString()}
                       </span>
                     )}
                   </div>
@@ -263,7 +263,7 @@ export default function TenantsTable({ tenants }: { tenants: TenantRow[] }) {
                     href={`/super-admin/tenants/${tenant.id}`}
                     className="inline-flex items-center gap-1.5 text-red-400 hover:text-red-300 text-xs font-semibold uppercase tracking-wider px-3 py-1.5 border border-red-500/30 rounded hover:bg-red-500/10 transition-colors"
                   >
-                    Manage
+                    إدارة
                   </Link>
                 </td>
               </tr>
@@ -273,7 +273,7 @@ export default function TenantsTable({ tenants }: { tenants: TenantRow[] }) {
               <tr>
                 <td colSpan={7} className="px-6 py-12 text-center text-[#737373] bg-[#0a0a0a]">
                   <Activity className="h-8 w-8 mx-auto mb-3 opacity-20 text-[#a3a3a3]" />
-                  <p>{search ? 'No tenants match your search.' : 'No tenants registered yet.'}</p>
+                  <p>{search ? 'لا يوجد فروع تطابق بحثك.' : 'لا يوجد فروع مسجلة حتى الآن.'}</p>
                 </td>
               </tr>
             )}
@@ -285,7 +285,7 @@ export default function TenantsTable({ tenants }: { tenants: TenantRow[] }) {
       {sorted.length > 0 && (
         <div className="flex items-center justify-between px-6 py-4 border-t border-[#262626] bg-[#0a0a0a]">
           <div className="flex items-center gap-3 text-xs text-[#737373]">
-            <span>Rows per page:</span>
+            <span>صفوف بالصفحة:</span>
             <select
               value={pageSize}
               onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
@@ -296,7 +296,7 @@ export default function TenantsTable({ tenants }: { tenants: TenantRow[] }) {
               ))}
             </select>
             <span className="hidden sm:inline">
-              Showing {(safePage - 1) * pageSize + 1}–{Math.min(safePage * pageSize, sorted.length)} of {sorted.length}
+              عرض {(safePage - 1) * pageSize + 1}–{Math.min(safePage * pageSize, sorted.length)} من {sorted.length}
             </span>
           </div>
 

@@ -41,14 +41,14 @@ export default function SystemStatus() {
     <div className="flex items-center gap-6">
       {/* Time Display */}
       <div className="hidden md:flex items-center gap-2 bg-[#141414] px-3 py-1.5 rounded-md border border-[#262626] font-mono text-xs text-[#737373]">
-        <span className="uppercase tracking-wider font-semibold text-[10px]">Platform Time:</span>
+        <span className="uppercase tracking-wider font-semibold text-[10px]">وقت المنصة:</span>
         <span className="text-white">{currentTime || '--:--:--'}</span>
       </div>
 
       {/* Active DB stats */}
       <div className="hidden lg:flex items-center gap-2 bg-[#141414] px-3 py-1.5 rounded-md border border-[#262626] font-mono text-xs">
         <Database className="h-3.5 w-3.5 text-[#3b82f6]" />
-        <span className="text-[#737373]">DB PING:</span>
+        <span className="text-[#737373]">استجابة القاعدة:</span>
         <span className="text-emerald-400 font-bold">{latency}ms</span>
       </div>
 
@@ -59,14 +59,14 @@ export default function SystemStatus() {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
           </span>
-          OPERATIONAL
+          مستقر ويعمل
         </div>
 
         {/* Sync Refresh Button */}
         <button 
           onClick={triggerManualSync}
           className="h-8 w-8 flex items-center justify-center rounded-md bg-[#141414] border border-[#262626] text-[#737373] hover:text-white transition-colors hover:bg-[#262626]"
-          title="Sync Metrics"
+          title="تحديث البيانات"
         >
           <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? 'animate-spin text-emerald-400' : ''}`} />
         </button>
