@@ -25,8 +25,8 @@ export async function GET(req: Request) {
       .orderBy(desc(subscriptionRequests.createdAt));
 
     // Fetch new subscription logic tables if they exist (ignoring errors if not migrated yet)
-    let activeSubscription = null;
-    let tenantInvoices = [];
+    let activeSubscription: any = null;
+    let tenantInvoices: any[] = [];
     try {
       // @ts-ignore - this will work after migrations
       const { tenantSubscriptions, invoices, subscriptionPlans } = await import('@/schema/schema');
