@@ -23,6 +23,9 @@ export default function InvestmentsPage() {
 
   // KPIs Calculations
   const totalCapital = investors.reduce((sum, inv) => sum + (inv.capital || 0), 0);
+  const totalEarnings = filteredInvestors.reduce((sum, i) => sum + (Number(i.earnings) || 0), 0);
+
+  const hasTenantInfo = investors.some((i) => i.tenantName);
   const totalInvestors = investors.length;
   const institutionalCount = investors.filter(i => i.type === 'institutional').length;
   const retailCount = investors.filter(i => i.type === 'retail').length;
@@ -453,9 +456,6 @@ export default function InvestmentsPage() {
         </div>
 
         <div className="flex-1 overflow-auto">
-          {(() => {
-            const hasTenantInfo = investors.some((i) => i.tenantName);
-            return (
           <table className="w-full text-right">
             <thead className="sticky top-0 border-b border-[#262626] bg-[#0f0f0f] text-[10px] uppercase tracking-wider text-[#737373] z-10">
               <tr>

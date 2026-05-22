@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { loans, loanSchedules, cardBatches, tenants } from '@/schema/schema';
-import { desc, eq, inArray, sql } from 'drizzle-orm';
+import { desc, eq, inArray, sql, getTableColumns } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
 import { tenantCondition } from '@/lib/tenant';
@@ -40,7 +40,10 @@ export async function GET(req: Request) {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    let query = db.select().from(loans);
+    let query = db.select({
+      ...getTableColumns(loans),
+      tenantName: tenants.name
+    }).from(loans).leftJoin(tenants, eq(loans.tenantId, tenants.id));
     
     const tCond = tenantCondition(loans.tenantId, user);
     if (tCond) {

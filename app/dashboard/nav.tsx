@@ -11,6 +11,7 @@ import {
   BarChart3,
   ScrollText,
   UserCog,
+  Receipt,
   Menu,
   X,
 } from 'lucide-react';
@@ -22,6 +23,7 @@ const links = [
   { href: '/dashboard/loans', label: 'إدارة القروض', icon: CreditCard },
   { href: '/dashboard/kyc', label: 'طلبات التحقق', icon: ShieldCheck },
   { href: '/dashboard/reports', label: 'التقارير', icon: BarChart3 },
+  { href: '/dashboard/billing', label: 'الفواتير والاشتراك', icon: Receipt },
   { href: '/dashboard/audit-logs', label: 'سجل المراقبة', icon: ScrollText },
   { href: '/dashboard/account', label: 'حسابي', icon: UserCog },
 ];

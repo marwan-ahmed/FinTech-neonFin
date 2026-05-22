@@ -78,11 +78,12 @@ export default function LoansPage() {
     return () => { active = false; };
   }, []);
 
-  // Premium KPIs calculations
   const totalActiveDebt = loans.filter(l => l.computedStatus !== 'completed').reduce((sum, l) => sum + (l.totalDebt || 0), 0);
   const totalCollected = loans.reduce((sum, l) => sum + (l.paidAmount || 0), 0);
   const totalRemaining = loans.filter(l => l.computedStatus !== 'completed').reduce((sum, l) => sum + (l.remainingAmount || 0), 0);
   const lateLoansCount = loans.filter(l => l.computedStatus === 'late' || l.status === 'defaulted').length;
+
+  const hasTenantInfo = loans.some((l) => l.tenantName);
 
   // Apply search and filter tabs
   let filteredLoans = loans.filter(loan => {
@@ -332,6 +333,7 @@ export default function LoansPage() {
           <table className="w-full text-right">
             <thead className="sticky top-0 border-b border-[#262626] bg-[#0f0f0f] text-[10px] uppercase tracking-wider text-[#737373] z-10">
               <tr>
+                {hasTenantInfo && <th className="p-4 font-normal text-[#10b981]">الفرع (التاجر)</th>}
                 <th className="p-4 font-normal">المستفيد</th>
                 <th className="p-4 font-normal">إجمالي الدين</th>
                 <th className="p-4 font-normal">المسدد</th>
@@ -357,7 +359,7 @@ export default function LoansPage() {
                 ))
               ) : filteredLoans.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-16 text-center">
+                  <td colSpan={hasTenantInfo ? 8 : 7} className="p-16 text-center">
                     <div className="flex flex-col items-center justify-center gap-4 animate-fade-in-up">
                       {/* أيقونة بصرية */}
                       <div className="relative">
@@ -394,6 +396,13 @@ export default function LoansPage() {
                   
                   return (
                     <tr key={loan.id} className="border-b border-[#262626] transition-all duration-150 hover:bg-[#1a1a1a] group">
+                      {hasTenantInfo && (
+                        <td className="p-4">
+                          <span className="text-xs font-bold text-[#10b981] bg-[#10b981]/10 px-2.5 py-1 rounded-lg border border-[#10b981]/20">
+                            {loan.tenantName || 'غير محدد'}
+                          </span>
+                        </td>
+                      )}
                       <td className="p-4 text-white font-sans">
                         <Link href={`/dashboard/borrowers/${encodeURIComponent(loan.borrowerId || '')}`} className="group-hover:text-[#10b981] transition-colors font-bold flex flex-col">
                           <span className="flex items-center gap-2">

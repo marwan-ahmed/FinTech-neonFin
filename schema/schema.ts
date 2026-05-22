@@ -4,16 +4,31 @@ export const investorTypeEnum = pgEnum('investor_type', ['retail', 'institutiona
 export const loanStatusEnum = pgEnum('loan_status', ['pending', 'approved', 'active', 'completed', 'defaulted']);
 export const userRoleEnum = pgEnum('user_role', ['admin', 'superadmin']);
 export const tenantStatusEnum = pgEnum('tenant_status', ['pending', 'active', 'frozen']);
+export const subscriptionPlanEnum = pgEnum('subscription_plan', ['monthly', 'yearly', 'percentage', 'none']);
 
 export const tenants = pgTable('tenants', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
   status: tenantStatusEnum('status').default('pending').notNull(),
   subscriptionStatus: text('subscription_status', { enum: ['trial', 'active', 'expired'] }).default('trial').notNull(),
+  subscriptionPlan: subscriptionPlanEnum('subscription_plan').default('none').notNull(),
   subscriptionEndDate: timestamp('subscription_end_date'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
+
+export const subscriptionRequests = pgTable('subscription_requests', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').references(() => tenants.id).notNull(),
+  requestedPlan: subscriptionPlanEnum('requested_plan').notNull(),
+  paymentMethod: text('payment_method', { enum: ['cash', 'whatsapp'] }).notNull(),
+  status: text('status', { enum: ['pending', 'approved', 'rejected'] }).default('pending').notNull(),
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  index('sub_req_tenant_idx').on(table.tenantId)
+]);
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),

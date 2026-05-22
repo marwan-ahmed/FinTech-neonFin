@@ -6,6 +6,7 @@ import { count, sum, eq, sql } from "drizzle-orm";
 import { Server, Users, Wallet, CreditCard, AlertTriangle, TrendingUp, ShieldCheck, FileCheck } from "lucide-react";
 import TenantsTable, { type TenantRow } from "./TenantsTable";
 import PlatformCharts from "./PlatformCharts";
+import SubscriptionRequests from "./SubscriptionRequests";
 
 export default async function SuperAdminPage() {
   const user = await getCurrentUser();
@@ -191,6 +192,9 @@ export default async function SuperAdminPage() {
 
       {/* Charts Section — Side-by-side layout */}
       <PlatformCharts growthData={growthData} distributionData={distributionData} />
+
+      {/* Subscription Requests */}
+      <SubscriptionRequests />
 
       {/* Tenants Table — interactive client component */}
       <TenantsTable tenants={enrichedTenants} />
