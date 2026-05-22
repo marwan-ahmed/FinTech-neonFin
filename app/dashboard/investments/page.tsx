@@ -23,7 +23,7 @@ export default function InvestmentsPage() {
 
   // KPIs Calculations
   const totalCapital = investors.reduce((sum, inv) => sum + (inv.capital || 0), 0);
-  const totalEarnings = filteredInvestors.reduce((sum, i) => sum + (Number(i.earnings) || 0), 0);
+  const totalEarnings = investors.reduce((sum, i) => sum + (Number(i.earnings) || 0), 0);
 
   const hasTenantInfo = investors.some((i) => i.tenantName);
   const totalInvestors = investors.length;
@@ -602,8 +602,6 @@ export default function InvestmentsPage() {
               )}
             </tbody>
           </table>
-            );
-          })()}
         </div>
       </div>
 
