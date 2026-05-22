@@ -4,6 +4,7 @@ import { cardBatches, investors } from '@/schema/schema';
 import { desc, eq, sum } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
+import { tenantCondition } from '@/lib/tenant';
 import { z } from 'zod';
 
 const cardBatchSchema = z.object({
@@ -15,11 +16,13 @@ const cardBatchSchema = z.object({
 export async function GET(req: Request) {
   try {
     const user = await getCurrentUser();
-    if (!user || !user.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user || (!user.tenantId && user.role !== 'superadmin')) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const conditions = tenantCondition(cardBatches.tenantId, user);
 
     const batches = await db.select()
       .from(cardBatches)
-      .where(eq(cardBatches.tenantId, user.tenantId))
+      .where(conditions)
       .orderBy(desc(cardBatches.createdAt));
 
     return NextResponse.json(batches);

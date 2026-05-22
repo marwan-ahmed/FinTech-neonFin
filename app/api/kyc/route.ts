@@ -4,6 +4,7 @@ import { kycApplications } from '@/schema/schema';
 import { desc, eq } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
+import { tenantCondition } from '@/lib/tenant';
 import { z } from 'zod';
 
 const kycSchema = z.object({
@@ -22,14 +23,11 @@ export async function GET(req: Request) {
     const user = await getCurrentUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    let query = db.select().from(kycApplications);
+    const conditions = tenantCondition(kycApplications.tenantId, user);
 
-    // If superadmin, return all. Otherwise return only tenant's applications.
-    if (user.role !== 'superadmin') {
-       query = query.where(eq(kycApplications.tenantId, user.tenantId!)) as any;
-    }
-
-    const allKyc = await query.orderBy(desc(kycApplications.createdAt)).limit(limit).offset(offset);
+    const allKyc = await db.select().from(kycApplications)
+      .where(conditions)
+      .orderBy(desc(kycApplications.createdAt)).limit(limit).offset(offset);
     return NextResponse.json(allKyc);
   } catch (error) {
     console.error(error);

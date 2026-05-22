@@ -4,6 +4,7 @@ import { investors } from '@/schema/schema';
 import { eq, and } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
+import { tenantAndCondition } from '@/lib/tenant';
 import { z } from 'zod';
 
 const updateInvestorSchema = z.object({
@@ -16,11 +17,9 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
   const { id } = await context.params;
   try {
     const user = await getCurrentUser();
-    if (!user || !user.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user || (!user.tenantId && user.role !== 'superadmin')) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const conditions = user.role === 'superadmin' 
-        ? eq(investors.id, id)
-        : and(eq(investors.id, id), eq(investors.tenantId, user.tenantId));
+    const conditions = tenantAndCondition(investors.tenantId, user, eq(investors.id, id));
 
     // Check if investor exists and belongs to tenant
     const existing = await db.select().from(investors).where(conditions).limit(1);
@@ -65,11 +64,9 @@ export async function DELETE(req: Request, context: { params: Promise<{ id: stri
   const { id } = await context.params;
   try {
     const user = await getCurrentUser();
-    if (!user || !user.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user || (!user.tenantId && user.role !== 'superadmin')) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const conditions = user.role === 'superadmin' 
-        ? eq(investors.id, id)
-        : and(eq(investors.id, id), eq(investors.tenantId, user.tenantId));
+    const conditions = tenantAndCondition(investors.tenantId, user, eq(investors.id, id));
 
     // Check existence
     const existing = await db.select().from(investors).where(conditions).limit(1);
