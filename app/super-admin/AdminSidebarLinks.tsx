@@ -36,6 +36,8 @@ export default function AdminSidebarLinks() {
     {
       name: 'System Settings',
       href: '/super-admin/settings',
+      icon: Settings,
+      exact: false,
     },
     {
       name: 'Standard Dashboard',
