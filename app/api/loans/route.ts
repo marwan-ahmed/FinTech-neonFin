@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { loans, loanSchedules, cardBatches } from '@/schema/schema';
-import { desc, eq, inArray } from 'drizzle-orm';
+import { desc, eq, inArray, sql } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
 import { tenantCondition } from '@/lib/tenant';
@@ -93,8 +93,16 @@ export async function POST(req: Request) {
     if (!validationResult.success) {
       return NextResponse.json({ error: 'Validations failed', details: validationResult.error.format() }, { status: 400 });
     }
-    
     const data = validationResult.data;
+
+    // Fetch tenant to check trial limits
+    const tenantObj = await db.query.tenants.findFirst({ where: eq(tenants.id, user.tenantId!) });
+    if (tenantObj?.subscriptionStatus === 'trial') {
+      const [loansCount] = await db.select({ count: sql<number>`count(*)` }).from(loans).where(eq(loans.tenantId, user.tenantId!));
+      if (loansCount.count >= 1) {
+        return NextResponse.json({ error: 'عذراً، لا يمكن إضافة أكثر من قرض واحد في الفترة التجريبية. يرجى الترقية.' }, { status: 403 });
+      }
+    }
 
     // 🔒 3.2: استخدام المعاملات (Database Transactions) لمنع تفتت البيانات وضمان متانة الإدخال
     const result = await db.transaction(async (tx) => {

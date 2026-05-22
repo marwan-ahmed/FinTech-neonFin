@@ -453,9 +453,13 @@ export default function InvestmentsPage() {
         </div>
 
         <div className="flex-1 overflow-auto">
+          {(() => {
+            const hasTenantInfo = investors.some((i) => i.tenantName);
+            return (
           <table className="w-full text-right">
             <thead className="sticky top-0 border-b border-[#262626] bg-[#0f0f0f] text-[10px] uppercase tracking-wider text-[#737373] z-10">
               <tr>
+                {hasTenantInfo && <th className="p-4 font-normal text-[#10b981]">الفرع (التاجر)</th>}
                 <th className="p-4 font-normal">المستثمر</th>
                 <th className="p-4 font-normal">نوع المستثمر</th>
                 <th className="p-4 font-normal">رأس المال المُودع</th>
@@ -492,7 +496,7 @@ export default function InvestmentsPage() {
                 ))
               ) : filteredInvestors.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-12 text-center text-[#737373]">
+                  <td colSpan={hasTenantInfo ? 8 : 7} className="p-12 text-center text-[#737373]">
                     {investors.length > 0 ? 'لا توجد نتائج مطابقة للبحث أو التصنيف المحدد' : 'لا يوجد مستثمرين مسجلين في المحفظة بعد'}
                   </td>
                 </tr>
@@ -508,6 +512,11 @@ export default function InvestmentsPage() {
                       onClick={() => setSelectedInvestor(inv)}
                       className="border-b border-[#262626] transition-all duration-200 hover:bg-[#1a1a1a] cursor-pointer group"
                     >
+                      {hasTenantInfo && (
+                        <td className="p-4 text-[#10b981] font-bold text-xs truncate max-w-[120px]" title={inv.tenantName}>
+                          {inv.tenantName || '—'}
+                        </td>
+                      )}
                       <td className="p-4 text-white font-sans font-bold flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-[#262626] flex items-center justify-center text-xs font-mono text-[#10b981] group-hover:bg-[#10b981]/10 transition-colors">
                           {inv.name ? inv.name.charAt(0) : '?'}
@@ -593,6 +602,8 @@ export default function InvestmentsPage() {
               )}
             </tbody>
           </table>
+            );
+          })()}
         </div>
       </div>
 

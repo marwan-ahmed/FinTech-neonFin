@@ -276,9 +276,13 @@ export default function CardsInventoryPage() {
             </div>
             
             <div className="overflow-x-auto">
+              {(() => {
+                const hasTenantInfo = batches.some((b) => b.tenantName);
+                return (
               <table className="w-full text-right">
                 <thead className="bg-[#0f0f0f] border-b border-[#262626] text-[10px] uppercase tracking-wider text-[#737373]">
                   <tr>
+                    {hasTenantInfo && <th className="p-4 font-normal text-[#10b981]">الفرع (التاجر)</th>}
                     <th className="p-4 font-normal">اسم الوجبة</th>
                     <th className="p-4 font-normal">سعر الجملة للبطاقة</th>
                     <th className="p-4 font-normal">إجمالي التكلفة</th>
@@ -290,7 +294,7 @@ export default function CardsInventoryPage() {
                 <tbody className="text-sm font-mono">
                   {batches.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="p-12 text-center text-[#737373]">
+                      <td colSpan={hasTenantInfo ? 7 : 6} className="p-12 text-center text-[#737373]">
                         <div className="flex flex-col items-center justify-center gap-3">
                           <Package size={32} className="text-[#262626]" />
                           <p className="text-xs">المستودع فارغ، لم يتم شراء أي وجبة بطاقات بعد.</p>
@@ -308,6 +312,11 @@ export default function CardsInventoryPage() {
                       const sharePercent = batch.quantity > 0 ? ((batch.quantity - batch.remainingQuantity) / batch.quantity) * 100 : 0;
                       return (
                         <tr key={batch.id} className="border-b border-[#262626] hover:bg-[#1a1a1a] transition-colors">
+                          {hasTenantInfo && (
+                            <td className="p-4 text-[#10b981] font-bold text-xs truncate max-w-[120px]" title={batch.tenantName}>
+                              {batch.tenantName || '—'}
+                            </td>
+                          )}
                           <td className="p-4 text-white font-sans font-bold">
                             {batch.batchName}
                           </td>
@@ -337,6 +346,8 @@ export default function CardsInventoryPage() {
                   )}
                 </tbody>
               </table>
+              );
+              })()}
             </div>
           </div>
         </>

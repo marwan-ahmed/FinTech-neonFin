@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { cardBatches, investors } from '@/schema/schema';
-import { desc, eq, sum } from 'drizzle-orm';
+import { cardBatches, investors, tenants } from '@/schema/schema';
+import { desc, eq, sum, sql } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
 import { tenantCondition } from '@/lib/tenant';
@@ -20,8 +20,20 @@ export async function GET(req: Request) {
 
     const conditions = tenantCondition(cardBatches.tenantId, user);
 
-    const batches = await db.select()
+    const batches = await db.select({
+      id: cardBatches.id,
+      tenantId: cardBatches.tenantId,
+      batchName: cardBatches.batchName,
+      quantity: cardBatches.quantity,
+      remainingQuantity: cardBatches.remainingQuantity,
+      wholesalePrice: cardBatches.wholesalePrice,
+      totalCost: cardBatches.totalCost,
+      createdAt: cardBatches.createdAt,
+      updatedAt: cardBatches.updatedAt,
+      tenantName: tenants.name,
+    })
       .from(cardBatches)
+      .leftJoin(tenants, eq(cardBatches.tenantId, tenants.id))
       .where(conditions)
       .orderBy(desc(cardBatches.createdAt));
 
@@ -46,6 +58,17 @@ export async function POST(req: Request) {
     }
     
     const data = validationResult.data;
+
+    // Check if tenant is on trial and enforce 100 cards limit
+    const tenantObj = await db.query.tenants.findFirst({ where: eq(tenants.id, user.tenantId!) });
+    if (tenantObj?.subscriptionStatus === 'trial') {
+      const [cardsSum] = await db.select({ total: sql<number>`sum(${cardBatches.quantity})` }).from(cardBatches).where(eq(cardBatches.tenantId, user.tenantId!));
+      const currentTotal = Number(cardsSum.total || 0);
+      if (currentTotal + Number(data.quantity) > 100) {
+        return NextResponse.json({ error: 'عذراً، لا يمكن إضافة أكثر من 100 بطاقة إجمالاً في الفترة التجريبية. يرجى الترقية.' }, { status: 403 });
+      }
+    }
+
     const totalCost = data.quantity * data.wholesalePrice;
 
     // Check if there is enough liquid capital before purchasing

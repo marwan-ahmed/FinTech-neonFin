@@ -11,6 +11,9 @@ export interface TenantRow {
   usersCount: number;
   loansCount: number;
   totalCapital: number;
+  status: string;
+  subscriptionStatus: string;
+  subscriptionEndDate: string | null;
 }
 
 type SortKey = 'name' | 'createdAt' | 'usersCount' | 'loansCount' | 'totalCapital';
@@ -137,6 +140,9 @@ export default function TenantsTable({ tenants }: { tenants: TenantRow[] }) {
                 </button>
               </th>
               <th className="px-6 py-4 font-semibold">
+                Status
+              </th>
+              <th className="px-6 py-4 font-semibold">
                 <button onClick={() => toggleSort('createdAt')} className="flex items-center gap-1.5 hover:text-white transition-colors">
                   Created <SortIcon col="createdAt" activeKey={sortKey} direction={sortDir} />
                 </button>
@@ -192,8 +198,54 @@ export default function TenantsTable({ tenants }: { tenants: TenantRow[] }) {
                 </td>
 
                 {/* Capital */}
-                <td className="px-6 py-4 font-mono text-xs text-[#a3a3a3]">
-                  ${tenant.totalCapital.toLocaleString()}
+                <td className="px-6 py-4">
+                  <div className="font-mono text-emerald-400">
+                    {new Intl.NumberFormat('en-IQ', { style: 'currency', currency: 'IQD', maximumFractionDigits: 0 }).format(tenant.totalCapital)}
+                  </div>
+                </td>
+                
+                {/* Status */}
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex flex-col gap-1.5 items-start">
+                    {tenant.status === 'pending' ? (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
+                        <Clock className="w-3.5 h-3.5" />
+                        Pending
+                      </span>
+                    ) : tenant.status === 'frozen' ? (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-red-500/10 text-red-500 border border-red-500/20">
+                        <Ban className="w-3.5 h-3.5" />
+                        Frozen
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        Active
+                      </span>
+                    )}
+                    
+                    {tenant.subscriptionStatus === 'trial' && (
+                      <span className="block mt-1.5 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-500/10 text-blue-500 w-fit">
+                        Trial
+                      </span>
+                    )}
+                    {tenant.subscriptionStatus === 'active' && (
+                      <span className="block mt-1.5 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-500/10 text-emerald-500 w-fit">
+                        Active Sub
+                      </span>
+                    )}
+                    {tenant.subscriptionStatus === 'expired' && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-500/10 text-red-500 w-fit">
+                        Expired Sub
+                      </span>
+                    )}
+                    
+                    {tenant.subscriptionEndDate && (
+                      <span className="text-[10px] text-[#737373] mt-0.5">
+                        Exp: {new Date(tenant.subscriptionEndDate).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
                 </td>
 
                 {/* Created Date */}

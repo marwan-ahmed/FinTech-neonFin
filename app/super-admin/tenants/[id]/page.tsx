@@ -8,6 +8,8 @@ import {
   ArrowLeft, Users, CreditCard, Wallet, FileCheck, Activity, Calendar,
   TrendingUp, AlertTriangle, ShieldCheck
 } from "lucide-react";
+import TenantStatusToggle from "./TenantStatusToggle";
+import TenantSubscriptionControls from "./TenantSubscriptionControls";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -97,7 +99,16 @@ export default async function TenantDetailPage({ params }: PageProps) {
             {tenant.name.substring(0, 2).toUpperCase()}
           </div>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">{tenant.name}</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold tracking-tight">{tenant.name}</h1>
+              <span className={`px-2 py-0.5 rounded text-xs font-bold border ${
+                tenant.status === 'active' ? 'bg-[#10b981]/10 text-[#10b981] border-[#10b981]/20' : 
+                tenant.status === 'frozen' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+              }`}>
+                {tenant.status === 'active' ? 'نشط' : tenant.status === 'frozen' ? 'مجمد' : 'قيد المراجعة'}
+              </span>
+            </div>
             <p className="text-[#737373] text-sm mt-1 flex items-center gap-3">
               <span className="font-mono">{tenant.id}</span>
               <span>•</span>
@@ -107,6 +118,26 @@ export default async function TenantDetailPage({ params }: PageProps) {
               </span>
             </p>
           </div>
+        </div>
+        
+        <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-[#0f0f0f] border border-[#262626] rounded-xl p-6">
+            <h3 className="font-semibold text-lg flex items-center gap-2 mb-4">
+              <Activity className="h-5 w-5 text-blue-500" />
+              Security & Access
+            </h3>
+            <p className="text-[#a3a3a3] text-sm mb-6">
+              Control platform access for this specific organization. Frozen organizations cannot login or access APIs.
+            </p>
+            <TenantStatusToggle tenantId={tenant.id} initialStatus={tenant.status} />
+          </div>
+
+          <TenantSubscriptionControls 
+            tenantId={tenant.id} 
+            status={tenant.status}
+            subscriptionStatus={tenant.subscriptionStatus}
+            subscriptionEndDate={tenant.subscriptionEndDate ? tenant.subscriptionEndDate.toISOString() : null}
+          />
         </div>
       </div>
 

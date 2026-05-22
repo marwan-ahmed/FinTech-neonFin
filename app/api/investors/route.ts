@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { investors, investorDistributions } from '@/schema/schema';
+import { investors, investorDistributions, tenants } from '@/schema/schema';
 import { desc, eq, sql } from 'drizzle-orm';
 import { getCurrentUser } from '@/lib/auth';
 import { logAudit } from '@/lib/audit';
@@ -32,12 +32,14 @@ export async function GET(req: Request) {
       type: investors.type,
       createdAt: investors.createdAt,
       updatedAt: investors.updatedAt,
-      earnings: sql<string>`COALESCE(SUM(${investorDistributions.amount}), 0)`
+      earnings: sql<string>`COALESCE(SUM(${investorDistributions.amount}), 0)`,
+      tenantName: tenants.name,
     })
       .from(investors)
       .leftJoin(investorDistributions, eq(investors.id, investorDistributions.investorId))
+      .leftJoin(tenants, eq(investors.tenantId, tenants.id))
       .where(conditions)
-      .groupBy(investors.id)
+      .groupBy(investors.id, tenants.name)
       .orderBy(desc(investors.createdAt))
       .limit(limit)
       .offset(offset);
@@ -55,6 +57,15 @@ export async function POST(req: Request) {
     if (!user || !user.tenantId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const rawData = await req.json();
+
+    // Fetch tenant to check trial limits
+    const tenantObj = await db.query.tenants.findFirst({ where: eq(tenants.id, user.tenantId!) });
+    if (tenantObj?.subscriptionStatus === 'trial') {
+      const [investorsCount] = await db.select({ count: sql<number>`count(*)` }).from(investors).where(eq(investors.tenantId, user.tenantId!));
+      if (investorsCount.count >= 1) {
+        return NextResponse.json({ error: 'عذراً، لا يمكن إضافة أكثر من مستثمر واحد في الفترة التجريبية. يرجى الترقية.' }, { status: 403 });
+      }
+    }
     
     // Validate input using Zod
     const validationResult = investorSchema.safeParse(rawData);

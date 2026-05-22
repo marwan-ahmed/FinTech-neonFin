@@ -46,6 +46,9 @@ export default async function TenantsManagementPage() {
     usersCount: usersMap.get(t.id) || 0,
     loansCount: loansMap.get(t.id) || 0,
     totalCapital: capitalMap.get(t.id) || 0,
+    status: t.status,
+    subscriptionStatus: t.subscriptionStatus,
+    subscriptionEndDate: t.subscriptionEndDate ? t.subscriptionEndDate.toISOString() : null,
   }));
 
   return (

@@ -18,6 +18,51 @@ export default async function DashboardLayout({
     redirect('/login');
   }
 
+  if ((session as any).isFrozen) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen w-full bg-[#0a0a0a] p-6 text-center">
+        <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mb-6">
+          <div className="w-10 h-10 bg-red-500 rounded-full animate-pulse"></div>
+        </div>
+        <h1 className="text-3xl font-bold text-white mb-2">الحساب مجمد (Frozen Account)</h1>
+        <p className="text-[#a3a3a3] max-w-md mb-8">
+          عذراً، تم تجميد حساب هذا الفرع من قبل الإدارة. يرجى التواصل مع الدعم الفني أو السوبر آدمن لتفعيل الحساب واستعادة إمكانية الوصول إلى النظام.
+        </p>
+        <LogoutButton />
+      </div>
+    );
+  }
+
+  if ((session as any).isPending) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen w-full bg-[#0a0a0a] p-6 text-center">
+        <div className="w-20 h-20 bg-yellow-500/10 rounded-full flex items-center justify-center mb-6">
+          <div className="w-10 h-10 bg-yellow-500 rounded-full animate-pulse"></div>
+        </div>
+        <h1 className="text-3xl font-bold text-white mb-2">حسابك قيد المراجعة</h1>
+        <p className="text-[#a3a3a3] max-w-md mb-8">
+          تم استلام طلب التسجيل الخاص بك بنجاح. حسابك الآن قيد المراجعة من قبل الإدارة، وسيتم تفعيله خلال مدة أقصاها 48 ساعة.
+        </p>
+        <LogoutButton />
+      </div>
+    );
+  }
+
+  if ((session as any).isExpired) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen w-full bg-[#0a0a0a] p-6 text-center">
+        <div className="w-20 h-20 bg-orange-500/10 rounded-full flex items-center justify-center mb-6">
+          <div className="w-10 h-10 bg-orange-500 rounded-full animate-pulse"></div>
+        </div>
+        <h1 className="text-3xl font-bold text-white mb-2">الاشتراك منتهي</h1>
+        <p className="text-[#a3a3a3] max-w-md mb-8">
+          عذراً، لقد انتهت صلاحية اشتراكك في المنصة. يرجى تجديد الاشتراك للتمتع بكافة الصلاحيات واستعادة الوصول للنظام.
+        </p>
+        <LogoutButton />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col flex-1 w-full bg-[#0a0a0a]">
       {/* Top Navigation Bar */}

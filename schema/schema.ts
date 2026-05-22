@@ -1,12 +1,16 @@
-import { pgTable, text, timestamp, decimal, integer, uuid, pgEnum, jsonb, index } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, decimal, integer, uuid, pgEnum, jsonb, index, boolean } from 'drizzle-orm/pg-core';
 
 export const investorTypeEnum = pgEnum('investor_type', ['retail', 'institutional']);
 export const loanStatusEnum = pgEnum('loan_status', ['pending', 'approved', 'active', 'completed', 'defaulted']);
 export const userRoleEnum = pgEnum('user_role', ['admin', 'superadmin']);
+export const tenantStatusEnum = pgEnum('tenant_status', ['pending', 'active', 'frozen']);
 
 export const tenants = pgTable('tenants', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
+  status: tenantStatusEnum('status').default('pending').notNull(),
+  subscriptionStatus: text('subscription_status', { enum: ['trial', 'active', 'expired'] }).default('trial').notNull(),
+  subscriptionEndDate: timestamp('subscription_end_date'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

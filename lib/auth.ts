@@ -50,9 +50,28 @@ export async function getCurrentUser() {
         dbUser = newUsers[0];
     }
 
+    if (dbUser && dbUser.role !== 'superadmin') {
+      const tenant = await db.query.tenants.findFirst({
+        where: eq(tenants.id, dbUser.tenantId)
+      });
+      if (tenant) {
+        if (tenant.status === 'frozen') {
+          throw new Error('TENANT_FROZEN');
+        }
+
+        if (tenant.status === 'pending') {
+          throw new Error('TENANT_PENDING');
+        }
+        if (tenant.subscriptionEndDate && new Date() > new Date(tenant.subscriptionEndDate)) {
+          throw new Error('TENANT_EXPIRED');
+        }
+      }
+    }
+
     return dbUser || null;
-  } catch (error) {
+  } catch (error: any) {
     console.error("getCurrentUser error:", error);
+    if (error.message === 'TENANT_FROZEN' || error.message === 'TENANT_PENDING' || error.message === 'TENANT_EXPIRED') throw error;
     return null;
   }
 }
