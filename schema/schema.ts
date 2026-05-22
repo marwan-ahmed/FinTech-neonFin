@@ -6,6 +6,12 @@ export const userRoleEnum = pgEnum('user_role', ['admin', 'superadmin']);
 export const tenantStatusEnum = pgEnum('tenant_status', ['pending', 'active', 'frozen']);
 export const subscriptionPlanEnum = pgEnum('subscription_plan', ['monthly', 'yearly', 'percentage', 'none']);
 
+// New enums for the comprehensive subscription system
+export const subscriptionBillingCycleEnum = pgEnum('subscription_billing_cycle', ['monthly', 'yearly']);
+export const subscriptionTypeEnum = pgEnum('subscription_type', ['fixed', 'percentage']);
+export const tenantSubscriptionStatusEnum = pgEnum('tenant_subscription_status', ['trial', 'active', 'past_due', 'canceled', 'unpaid']);
+export const invoiceStatusEnum = pgEnum('invoice_status', ['draft', 'open', 'paid', 'void', 'uncollectible']);
+
 export const tenants = pgTable('tenants', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
@@ -29,6 +35,64 @@ export const subscriptionRequests = pgTable('subscription_requests', {
 }, (table) => [
   index('sub_req_tenant_idx').on(table.tenantId)
 ]);
+
+export const subscriptionPlans = pgTable('subscription_plans', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  type: subscriptionTypeEnum('type').default('fixed').notNull(),
+  price: decimal('price', { precision: 12, scale: 2 }),
+  percentageRate: decimal('percentage_rate', { precision: 5, scale: 2 }),
+  billingCycle: subscriptionBillingCycleEnum('billing_cycle').default('monthly').notNull(),
+  features: jsonb('features'),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const tenantSubscriptions = pgTable('tenant_subscriptions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').references(() => tenants.id).notNull(),
+  planId: uuid('plan_id').references(() => subscriptionPlans.id).notNull(),
+  status: tenantSubscriptionStatusEnum('status').default('trial').notNull(),
+  startDate: timestamp('start_date').defaultNow().notNull(),
+  endDate: timestamp('end_date'),
+  gracePeriodEnd: timestamp('grace_period_end'),
+  autoRenew: boolean('auto_renew').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  index('tenant_subscriptions_tenant_idx').on(table.tenantId),
+  index('tenant_subscriptions_plan_idx').on(table.planId)
+]);
+
+export const invoices = pgTable('invoices', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').references(() => tenants.id).notNull(),
+  subscriptionId: uuid('subscription_id').references(() => tenantSubscriptions.id).notNull(),
+  amount: decimal('amount', { precision: 12, scale: 2 }).notNull(),
+  status: invoiceStatusEnum('status').default('draft').notNull(),
+  dueDate: timestamp('due_date'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  index('invoices_tenant_idx').on(table.tenantId),
+  index('invoices_subscription_idx').on(table.subscriptionId),
+  index('invoices_status_idx').on(table.status)
+]);
+
+export const notifications = pgTable('notifications', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').references(() => tenants.id).notNull(),
+  title: text('title').notNull(),
+  message: text('message').notNull(),
+  isRead: boolean('is_read').default(false).notNull(),
+  type: text('type').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  index('notifications_tenant_idx').on(table.tenantId),
+  index('notifications_is_read_idx').on(table.isRead)
+]);
+
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),

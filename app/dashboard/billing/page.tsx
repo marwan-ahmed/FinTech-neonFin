@@ -15,6 +15,8 @@ type SubscriptionRequest = {
 export default function BillingPage() {
   const [tenant, setTenant] = useState<any>(null);
   const [requests, setRequests] = useState<SubscriptionRequest[]>([]);
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [activeSubscription, setActiveSubscription] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   
@@ -32,7 +34,9 @@ export default function BillingPage() {
         if (!res.ok) throw new Error('Failed to fetch');
         const data = await res.json();
         setTenant(data.tenant);
-        setRequests(data.requests);
+        setRequests(data.requests || []);
+        setInvoices(data.invoices || []);
+        setActiveSubscription(data.activeSubscription || null);
       } catch (err) {
         console.error(err);
       } finally {
@@ -100,10 +104,12 @@ export default function BillingPage() {
                 <p className="text-[#737373] text-sm">نوع الاشتراك</p>
                 <p className="text-white font-bold text-lg mt-1 capitalize">
                   {loading ? 'قيد التحميل...' : (
-                    tenant?.subscriptionPlan === 'monthly' ? 'شهرية' :
-                    tenant?.subscriptionPlan === 'yearly' ? 'سنوية' :
-                    tenant?.subscriptionPlan === 'percentage' ? 'نسبة' :
-                    'نسخة تجريبية'
+                    activeSubscription?.subscription_plans?.name || (
+                      tenant?.subscriptionPlan === 'monthly' ? 'شهرية' :
+                      tenant?.subscriptionPlan === 'yearly' ? 'سنوية' :
+                      tenant?.subscriptionPlan === 'percentage' ? 'نسبة' :
+                      'نسخة تجريبية'
+                    )
                   )}
                 </p>
               </div>
@@ -111,13 +117,21 @@ export default function BillingPage() {
                 <p className="text-[#737373] text-sm">تاريخ الانتهاء</p>
                 <p className="text-white font-mono mt-1">
                   {loading ? '--/--/----' : (
-                    tenant?.subscriptionEndDate 
-                      ? format(new Date(tenant.subscriptionEndDate), 'yyyy-MM-dd') 
-                      : 'غير محدد'
+                    activeSubscription?.tenant_subscriptions?.endDate
+                      ? format(new Date(activeSubscription.tenant_subscriptions.endDate), 'yyyy-MM-dd')
+                      : tenant?.subscriptionEndDate 
+                        ? format(new Date(tenant.subscriptionEndDate), 'yyyy-MM-dd') 
+                        : 'غير محدد'
                   )}
                 </p>
               </div>
             </div>
+            {activeSubscription && activeSubscription.tenant_subscriptions?.status === 'past_due' && (
+              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm flex gap-2">
+                <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                <p>اشتراكك متأخر. يرجى تسديد الفواتير لتجنب إيقاف الخدمة.</p>
+              </div>
+            )}
             <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-400 text-sm flex gap-2">
               <AlertCircle size={16} className="mt-0.5 shrink-0" />
               <p>يتم تفعيل وتجديد الاشتراكات بشكل يدوي بعد مراجعة الحوالة عبر زين كاش أو استلام المبلغ نقداً.</p>
@@ -147,6 +161,38 @@ export default function BillingPage() {
                     {req.status === 'pending' && <span className="px-2 py-1 bg-yellow-500/10 text-yellow-500 rounded text-xs">قيد المراجعة</span>}
                     {req.status === 'approved' && <span className="px-2 py-1 bg-green-500/10 text-green-500 rounded text-xs">تمت الموافقة</span>}
                     {req.status === 'rejected' && <span className="px-2 py-1 bg-red-500/10 text-red-500 rounded text-xs">مرفوض</span>}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6">
+        <div className="bg-[#141414] border border-[#262626] rounded-xl p-6">
+          <h2 className="text-lg font-bold text-white mb-4">الفواتير والمستحقات</h2>
+          <div className="space-y-3">
+            {loading ? (
+               <div className="text-center p-8 text-[#737373] bg-[#1a1a1a] rounded-lg border border-[#262626] border-dashed">
+                 جاري التحميل...
+               </div>
+            ) : invoices.length === 0 ? (
+              <div className="text-center p-8 text-[#737373] bg-[#1a1a1a] rounded-lg border border-[#262626] border-dashed">
+                لا توجد فواتير حالية
+              </div>
+            ) : (
+              invoices.map(inv => (
+                <div key={inv.id} className="p-4 bg-[#1a1a1a] border border-[#262626] rounded-lg flex justify-between items-center">
+                  <div>
+                    <p className="text-sm font-bold text-white">المبلغ: {inv.amount} دينار</p>
+                    <p className="text-xs text-[#737373] mt-0.5">الاستحقاق: {inv.dueDate ? format(new Date(inv.dueDate), 'yyyy-MM-dd') : 'غير محدد'}</p>
+                  </div>
+                  <div>
+                    {inv.status === 'draft' && <span className="px-2 py-1 bg-gray-500/10 text-gray-400 rounded text-xs">مسودة</span>}
+                    {inv.status === 'open' && <span className="px-2 py-1 bg-yellow-500/10 text-yellow-500 rounded text-xs">بانتظار الدفع</span>}
+                    {inv.status === 'paid' && <span className="px-2 py-1 bg-green-500/10 text-green-500 rounded text-xs">مدفوعة</span>}
+                    {inv.status === 'void' && <span className="px-2 py-1 bg-red-500/10 text-red-500 rounded text-xs">ملغاة</span>}
                   </div>
                 </div>
               ))

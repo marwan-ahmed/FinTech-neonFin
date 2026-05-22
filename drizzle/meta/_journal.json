@@ -43,6 +43,13 @@
       "when": 1779429174757,
       "tag": "0005_bizarre_dreadnoughts",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1779439766511,
+      "tag": "0006_open_justice",
+      "breakpoints": true
     }
   ]
 }

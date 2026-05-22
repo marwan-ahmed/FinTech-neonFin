@@ -24,7 +24,33 @@ export async function GET(req: Request) {
       .where(eq(subscriptionRequests.tenantId, user.tenantId))
       .orderBy(desc(subscriptionRequests.createdAt));
 
-    return NextResponse.json({ tenant, requests });
+    // Fetch new subscription logic tables if they exist (ignoring errors if not migrated yet)
+    let activeSubscription = null;
+    let tenantInvoices = [];
+    try {
+      // @ts-ignore - this will work after migrations
+      const { tenantSubscriptions, invoices, subscriptionPlans } = await import('@/schema/schema');
+      
+      const subResult = await db.select()
+        .from(tenantSubscriptions)
+        .leftJoin(subscriptionPlans, eq(tenantSubscriptions.planId, subscriptionPlans.id))
+        .where(eq(tenantSubscriptions.tenantId, user.tenantId))
+        .orderBy(desc(tenantSubscriptions.createdAt))
+        .limit(1);
+        
+      if (subResult.length > 0) {
+        activeSubscription = subResult[0];
+      }
+      
+      tenantInvoices = await db.select()
+        .from(invoices)
+        .where(eq(invoices.tenantId, user.tenantId))
+        .orderBy(desc(invoices.createdAt));
+    } catch (e) {
+      console.warn("New subscription schema not yet migrated");
+    }
+
+    return NextResponse.json({ tenant, requests, activeSubscription, invoices: tenantInvoices });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: 'Failed to fetch subscription details' }, { status: 500 });
