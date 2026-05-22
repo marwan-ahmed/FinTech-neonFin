@@ -69,8 +69,8 @@ export default function AddTenantModal({ isOpen, onClose }: AddTenantModalProps)
               <Building2 className="h-5 w-5 text-red-400" />
             </div>
             <div>
-              <h3 className="text-base font-semibold text-white">Provision Space</h3>
-              <p className="text-xs text-[#737373]">Onboard a new SaaS tenant organization.</p>
+              <h3 className="text-base font-semibold text-white">إضافة فرع جديد</h3>
+              <p className="text-xs text-[#737373]">تسجيل فرع / حساب جديد بالمنصة.</p>
             </div>
           </div>
           <button 
@@ -95,19 +95,19 @@ export default function AddTenantModal({ isOpen, onClose }: AddTenantModalProps)
             {success && (
               <div className="flex items-center gap-3 p-3 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs animate-fade-in">
                 <ShieldAlert className="h-4 w-4 flex-shrink-0" />
-                <p>Space successfully created! Refreshing grid...</p>
+                <p>تم إنشاء الفرع بنجاح! جاري التحديث...</p>
               </div>
             )}
 
             <div className="space-y-2">
               <label htmlFor="org-name" className="text-[11px] uppercase tracking-widest font-bold text-[#737373]">
-                Organization Name
+                اسم الفرع / المؤسسة
               </label>
               <input
                 id="org-name"
                 type="text"
                 required
-                placeholder="e.g. Alpha FinTech, Inc."
+                placeholder="مثلاً: شركة ألفا للتقنية"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 disabled={isSubmitting || success}
@@ -118,8 +118,8 @@ export default function AddTenantModal({ isOpen, onClose }: AddTenantModalProps)
 
             {/* Multi-tenancy Advisory Warning */}
             <div className="bg-[#141414] rounded-md p-3.5 border border-[#262626] text-[10px] text-[#525252] leading-relaxed">
-              <span className="text-[#a3a3a3] font-semibold mr-1 uppercase">SYSTEM NOTICE:</span>
-              Provisioning a new workspace creates isolated schemas and structural keys. This action maps explicitly into globally-replicated tables and logs to Root Audits.
+              <span className="text-[#a3a3a3] font-semibold mr-1 uppercase">تنبيه النظام:</span>
+              إنشاء مساحة عمل جديدة يقوم بإعداد قواعد بيانات ومفاتيح منفصلة، ويتم تسجيل هذه العملية في سجلات النظام الرئيسية.
             </div>
           </div>
 
@@ -131,7 +131,7 @@ export default function AddTenantModal({ isOpen, onClose }: AddTenantModalProps)
               disabled={isSubmitting || success}
               className="px-4 py-2 text-xs font-bold text-[#737373] hover:text-white rounded-md hover:bg-[#141414] transition-colors disabled:opacity-40"
             >
-              Cancel
+              إلغاء
             </button>
             <button
               type="submit"
@@ -141,14 +141,14 @@ export default function AddTenantModal({ isOpen, onClose }: AddTenantModalProps)
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  Provisioning...
+                  جاري الإنشاء...
                 </>
               ) : success ? (
-                'Created!'
+                'تم الإنشاء!'
               ) : (
                 <>
                   <Plus className="h-3.5 w-3.5" />
-                  Create Organization
+                  إنشاء الفرع
                 </>
               )}
             </button>

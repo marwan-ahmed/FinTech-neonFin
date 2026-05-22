@@ -12,18 +12,18 @@ export default async function SystemSettingsPage() {
 
   // Diagnostic properties read from server runtime environment
   const diagnostics = [
-    { key: 'Runtime Environment', val: process.env.NODE_ENV || 'production', icon: Terminal },
-    { key: 'Application Server', val: 'Next.js 15.4 (Vercel)', icon: Globe },
-    { key: 'Engine Core', val: process.version || 'Node v20.x', icon: Cpu },
-    { key: 'Platform Tier', val: 'Enterprise / Multi-tenant', icon: HardDrive },
+    { key: 'بيئة التشغيل', val: process.env.NODE_ENV || 'production', icon: Terminal },
+    { key: 'خادم التطبيق', val: 'Next.js 15.4 (Vercel)', icon: Globe },
+    { key: 'المحرك الأساسي', val: process.version || 'Node v20.x', icon: Cpu },
+    { key: 'مستوى المنصة', val: 'Enterprise / Multi-tenant', icon: HardDrive },
   ];
 
   // Global system configurations toggles visual
   const featureFlags = [
-    { name: 'Public Signups (Self-Serve)', desc: 'Allows independent businesses to create organizations.', active: false },
-    { name: 'Strict KYC Mode (Enforced)', desc: 'Blocks loan approval before identity validation clears.', active: true },
-    { name: 'Real-time WebSockets', desc: 'Streams push notifications for live financial activity.', active: true },
-    { name: 'Immutable Audit Trails', desc: 'Forces sequential hash logging for administrative changes.', active: true },
+    { name: 'التسجيل العام (ذاتي)', desc: 'يسمح للشركات بإنشاء حساباتهم بأنفسهم.', active: false },
+    { name: 'وضع التحقق الصارم (KYC)', desc: 'يمنع الموافقة على القروض قبل التحقق من الهوية.', active: true },
+    { name: 'اتصالات حية (WebSockets)', desc: 'بث الإشعارات للأنشطة المالية بشكل حي.', active: true },
+    { name: 'سجلات تدقيق غير قابلة للتعديل', desc: 'يفرض تسجيل التغييرات الإدارية لضمان عدم تلاعبها.', active: true },
   ];
 
   return (
@@ -33,10 +33,10 @@ export default async function SystemSettingsPage() {
       <div>
         <div className="flex items-center gap-2 mb-1 text-xs text-[#737373] uppercase font-bold tracking-widest">
           <Settings className="h-3 w-3 text-red-500" />
-          <span>Operational Architecture</span>
+          <span>البنية التحتية والتشغيلية</span>
         </div>
-        <h1 className="text-3xl font-bold tracking-tight">System Settings</h1>
-        <p className="text-[#a3a3a3] mt-2">Configure global SaaS features, compliance logic, and diagnostics parameters.</p>
+        <h1 className="text-3xl font-bold tracking-tight">إعدادات النظام</h1>
+        <p className="text-[#a3a3a3] mt-2">ضبط إعدادات المنصة، قواعد الامتثال، ومقاييس الأداء.</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -51,8 +51,8 @@ export default async function SystemSettingsPage() {
                 <Radio className="h-4 w-4 text-blue-400 animate-pulse" />
               </div>
               <div>
-                <h3 className="font-semibold text-white">Runtime Node Diagnostics</h3>
-                <p className="text-xs text-[#737373] mt-0.5">Core execution flags and host variables.</p>
+                <h3 className="font-semibold text-white">تشخيص بيئة التشغيل</h3>
+                <p className="text-xs text-[#737373] mt-0.5">متغيرات الخادم وبيئة التشغيل الأساسية.</p>
               </div>
             </div>
 
@@ -81,8 +81,8 @@ export default async function SystemSettingsPage() {
                 <ToggleLeft className="h-4 w-4 text-emerald-400" />
               </div>
               <div>
-                <h3 className="font-semibold text-white">Platform Feature Flags</h3>
-                <p className="text-xs text-[#737373] mt-0.5">Toggle operational logic and onboarding workflows.</p>
+                <h3 className="font-semibold text-white">ميزات المنصة</h3>
+                <p className="text-xs text-[#737373] mt-0.5">تفعيل وتعطيل الميزات وخصائص التسجيل.</p>
               </div>
             </div>
 
@@ -123,31 +123,31 @@ export default async function SystemSettingsPage() {
               <div className="h-8 w-8 rounded bg-red-950/30 border border-red-900/40 flex items-center justify-center flex-shrink-0">
                 <Shield className="h-4 w-4 text-red-400" />
               </div>
-              <h3 className="font-semibold text-white">Platform Security Policies</h3>
+              <h3 className="font-semibold text-white">سياسات أمان المنصة</h3>
             </div>
 
             <div className="space-y-4">
               <div className="bg-[#141111] p-3 rounded border border-red-900/10">
-                <p className="text-[10px] uppercase tracking-widest font-bold text-[#737373] mb-1">Authentication Key</p>
+                <p className="text-[10px] uppercase tracking-widest font-bold text-[#737373] mb-1">مفتاح المصادقة</p>
                 <p className="text-xs text-white font-mono">Firebase Admin SDK (Session Cookies)</p>
               </div>
 
               <div className="bg-[#141111] p-3 rounded border border-red-900/10">
-                <p className="text-[10px] uppercase tracking-widest font-bold text-[#737373] mb-1">Default Session TTL</p>
-                <p className="text-xs text-white font-mono">5 Days (Rolling Refresh)</p>
+                <p className="text-[10px] uppercase tracking-widest font-bold text-[#737373] mb-1">مدة الجلسة الافتراضية</p>
+                <p className="text-xs text-white font-mono">5 أيام (تجديد تلقائي)</p>
               </div>
 
               <div className="bg-[#141111] p-3 rounded border border-red-900/10">
-                <p className="text-[10px] uppercase tracking-widest font-bold text-[#737373] mb-1">TLS Validation</p>
+                <p className="text-[10px] uppercase tracking-widest font-bold text-[#737373] mb-1">التحقق من التشفير (TLS)</p>
                 <p className="text-xs text-emerald-400 font-bold flex items-center gap-1.5">
                   <CheckSquare className="h-3.5 w-3.5" />
-                  HTTPS Strictly Forced
+                  مفروض دائماً (HTTPS)
                 </p>
               </div>
             </div>
 
             <div className="mt-6 pt-5 border-t border-red-950/30 text-[10px] text-[#525252] leading-relaxed">
-              These security directives are hardcoded into server-side Middleware components and cannot be modified during active deployments for regulatory compliance.
+              هذه السياسات الأمنية مدمجة برمجياً في طبقات الحماية ولا يمكن تعديلها أثناء التشغيل لضمان الامتثال الأمني.
             </div>
           </div>
 

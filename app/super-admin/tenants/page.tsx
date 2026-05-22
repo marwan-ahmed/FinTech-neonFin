@@ -57,10 +57,10 @@ export default async function TenantsManagementPage() {
       <div className="animate-fade-in">
         <div className="flex items-center gap-2 mb-1 text-xs text-[#737373] uppercase font-bold tracking-widest">
           <Building2 className="h-3 w-3 text-red-500" />
-          <span>Infrastructure Registry</span>
+          <span>سجل البنية التحتية</span>
         </div>
-        <h1 className="text-3xl font-bold tracking-tight">Tenants Management</h1>
-        <p className="text-[#a3a3a3] mt-2">Track, monitor, and provision SaaS space configurations across NeonFin.</p>
+        <h1 className="text-3xl font-bold tracking-tight">إدارة الفروع والحسابات</h1>
+        <p className="text-[#a3a3a3] mt-2">تتبع، ومراقبة، وإعداد تكوينات مساحات العمل عبر المنصة.</p>
       </div>
 
       {/* Client wrapper control panel holding state */}

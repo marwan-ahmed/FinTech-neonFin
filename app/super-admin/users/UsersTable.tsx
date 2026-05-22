@@ -57,11 +57,11 @@ export default function UsersTable({ users }: UsersTableProps) {
         <div>
           <h3 className="font-semibold text-lg flex items-center gap-2 text-white">
             <User className="h-5 w-5 text-[#a3a3a3]" />
-            Registered Accounts
+            الحسابات المسجلة
           </h3>
           <p className="text-sm text-[#737373] mt-1">
-            Manage user access mappings across organizations.
-            <span className="text-[#a3a3a3] ml-1.5">({filtered.length} active records)</span>
+            إدارة وصول المستخدمين عبر الفروع.
+            <span className="text-[#a3a3a3] ml-1.5">({filtered.length} سجل فعال)</span>
           </p>
         </div>
 
@@ -72,9 +72,9 @@ export default function UsersTable({ users }: UsersTableProps) {
             onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}
             className="w-full xs:w-auto bg-[#0a0a0a] border border-[#262626] text-[#d4d4d4] text-sm rounded-md px-3 py-2 focus:outline-none focus:border-red-500"
           >
-            <option value="all">All System Roles</option>
-            <option value="admin">Organization Admins</option>
-            <option value="superadmin">Super Admins</option>
+            <option value="all">جميع الصلاحيات</option>
+            <option value="admin">مدراء الفروع (Admins)</option>
+            <option value="superadmin">مدراء النظام (Super Admins)</option>
           </select>
 
           {/* Search bar */}
@@ -82,7 +82,7 @@ export default function UsersTable({ users }: UsersTableProps) {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#737373]" />
             <input
               type="text"
-              placeholder="Search users, emails, or orgs..."
+              placeholder="ابحث عن مستخدم، بريد إلكتروني، أو فرع..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               className="w-full bg-[#0a0a0a] border border-[#262626] text-white text-sm rounded-md pl-9 pr-4 py-2 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-colors placeholder:text-[#525252]"
@@ -96,11 +96,11 @@ export default function UsersTable({ users }: UsersTableProps) {
         <table className="w-full text-sm text-left border-collapse">
           <thead className="text-xs uppercase bg-[#0a0a0a] text-[#737373] border-b border-[#262626]">
             <tr>
-              <th className="px-6 py-4 font-semibold tracking-wider">Full Name / Identity</th>
-              <th className="px-6 py-4 font-semibold tracking-wider">Role Authentication</th>
-              <th className="px-6 py-4 font-semibold tracking-wider">Assigned Organization</th>
-              <th className="px-6 py-4 font-semibold tracking-wider">Phone Info</th>
-              <th className="px-6 py-4 font-semibold tracking-wider">Joined</th>
+              <th className="px-6 py-4 font-semibold tracking-wider">الاسم / الهوية</th>
+              <th className="px-6 py-4 font-semibold tracking-wider">الصلاحية</th>
+              <th className="px-6 py-4 font-semibold tracking-wider">الفرع التابع له</th>
+              <th className="px-6 py-4 font-semibold tracking-wider">رقم الهاتف</th>
+              <th className="px-6 py-4 font-semibold tracking-wider">تاريخ الانضمام</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#262626] text-[#d4d4d4]">
@@ -113,10 +113,10 @@ export default function UsersTable({ users }: UsersTableProps) {
                       {(u.fullName || u.email || 'U').substring(0, 2).toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                      <p className="font-semibold text-white truncate">{u.fullName || 'System User'}</p>
+                      <p className="font-semibold text-white truncate">{u.fullName || 'مستخدم نظام'}</p>
                       <p className="text-xs text-[#737373] flex items-center gap-1 mt-0.5 truncate">
                         <Mail className="h-3 w-3 opacity-50 flex-shrink-0" />
-                        {u.email || 'No configured email'}
+                        {u.email || 'لم يتم إعداد بريد إلكتروني'}
                       </p>
                     </div>
                   </div>
@@ -127,11 +127,11 @@ export default function UsersTable({ users }: UsersTableProps) {
                   {u.role === 'superadmin' ? (
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20 shadow-sm shadow-red-900/10 animate-pulse-subtle">
                       <Shield className="h-3 w-3" />
-                      Super Admin
+                      مدير نظام
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-[#1a1a1a] text-[#a3a3a3] border border-[#262626]">
-                      Org Admin
+                      مدير فرع
                     </span>
                   )}
                 </td>
@@ -143,7 +143,7 @@ export default function UsersTable({ users }: UsersTableProps) {
                       <Building2 className="h-3 w-3 text-[#737373]" />
                     </div>
                     <span className="font-medium text-[#a3a3a3] truncate max-w-[160px]">
-                      {u.tenantName || 'Isolated Root Node'}
+                      {u.tenantName || 'عقدة رئيسية معزولة'}
                     </span>
                   </div>
                 </td>
@@ -156,7 +156,7 @@ export default function UsersTable({ users }: UsersTableProps) {
                       {u.phoneNumber}
                     </span>
                   ) : (
-                    <span className="text-[#404040]">Unspecified</span>
+                    <span className="text-[#404040]">غير محدد</span>
                   )}
                 </td>
 
@@ -175,7 +175,7 @@ export default function UsersTable({ users }: UsersTableProps) {
               <tr>
                 <td colSpan={5} className="px-6 py-16 text-center text-[#737373] bg-[#0a0a0a]">
                   <Activity className="h-8 w-8 mx-auto mb-3 opacity-20 text-[#a3a3a3]" />
-                  <p className="text-sm">{search || roleFilter !== 'all' ? 'No matching records matched the filters.' : 'No registered system accounts detected.'}</p>
+                  <p className="text-sm">{search || roleFilter !== 'all' ? 'لا توجد سجلات تطابق عوامل التصفية.' : 'لم يتم اكتشاف حسابات نظام مسجلة.'}</p>
                 </td>
               </tr>
             )}
@@ -187,7 +187,7 @@ export default function UsersTable({ users }: UsersTableProps) {
       {filtered.length > 0 && (
         <div className="flex items-center justify-between px-6 py-4 border-t border-[#262626] bg-[#0a0a0a]">
           <div className="flex items-center gap-3 text-xs text-[#737373]">
-            <span className="hidden xs:inline">Lines per view:</span>
+            <span className="hidden xs:inline">الأسطر لكل صفحة:</span>
             <select
               value={pageSize}
               onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
@@ -198,7 +198,7 @@ export default function UsersTable({ users }: UsersTableProps) {
               ))}
             </select>
             <span>
-              Showing {(safePage - 1) * pageSize + 1}–{Math.min(safePage * pageSize, filtered.length)} of {filtered.length}
+              عرض {(safePage - 1) * pageSize + 1}–{Math.min(safePage * pageSize, filtered.length)} من {filtered.length}
             </span>
           </div>
 

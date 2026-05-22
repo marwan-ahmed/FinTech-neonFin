@@ -52,10 +52,10 @@ export default async function GlobalUsersPage() {
       <div className="animate-fade-in">
         <div className="flex items-center gap-2 mb-1 text-xs text-[#737373] uppercase font-bold tracking-widest">
           <HardDrive className="h-3 w-3 text-red-500" />
-          <span>Platform Membership Data</span>
+          <span>بيانات عضوية المنصة</span>
         </div>
-        <h1 className="text-3xl font-bold tracking-tight">Global Accounts</h1>
-        <p className="text-[#a3a3a3] mt-2">Cross-sectional overview of all security identities and administrative nodes currently registered.</p>
+        <h1 className="text-3xl font-bold tracking-tight">جميع الحسابات</h1>
+        <p className="text-[#a3a3a3] mt-2">نظرة عامة شاملة على جميع الحسابات والهويات الأمنية المسجلة حالياً.</p>
       </div>
 
       {/* Summary Quick Cards */}
@@ -63,7 +63,7 @@ export default async function GlobalUsersPage() {
         {/* Card 1: Total users */}
         <div className="p-5 rounded-xl border border-[#262626] bg-[#0f0f0f] shadow-md">
           <div className="flex items-center justify-between text-[#737373] text-xs uppercase font-bold mb-2">
-            <span>Total System Nodes</span>
+            <span>إجمالي الحسابات بالنظام</span>
             <Users className="h-4 w-4 text-blue-500" />
           </div>
           <p className="text-3xl font-extrabold text-white">{formattedUsers.length}</p>
@@ -72,7 +72,7 @@ export default async function GlobalUsersPage() {
         {/* Card 2: Super admins */}
         <div className="p-5 rounded-xl border border-red-900/20 bg-[#0f0f0f] shadow-md">
           <div className="flex items-center justify-between text-[#737373] text-xs uppercase font-bold mb-2">
-            <span>Root Super Admins</span>
+            <span>مدراء النظام (Super Admins)</span>
             <ShieldAlert className="h-4 w-4 text-red-500" />
           </div>
           <p className="text-3xl font-extrabold text-red-400">{totalSuperAdmins}</p>
@@ -81,7 +81,7 @@ export default async function GlobalUsersPage() {
         {/* Card 3: Regular Admins */}
         <div className="p-5 rounded-xl border border-[#262626] bg-[#0f0f0f] shadow-md">
           <div className="flex items-center justify-between text-[#737373] text-xs uppercase font-bold mb-2">
-            <span>Tenant Executives</span>
+            <span>مدراء الفروع (Admins)</span>
             <Users className="h-4 w-4 text-[#a3a3a3]" />
           </div>
           <p className="text-3xl font-extrabold text-[#d4d4d4]">{totalAdmins}</p>

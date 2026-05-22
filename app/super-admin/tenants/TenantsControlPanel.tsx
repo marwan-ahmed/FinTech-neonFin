@@ -21,9 +21,9 @@ export default function TenantsControlPanel({ enrichedTenants }: TenantsControlP
             <Building2 className="h-6 w-6 text-[#737373]" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white">Tenant Provisioning Desk</h2>
+            <h2 className="text-xl font-bold text-white">مكتب تجهيز الفروع</h2>
             <p className="text-sm text-[#525252] mt-0.5">
-              Deploy isolated SaaS workspaces with independent keys, resource tracking, and access protocols.
+              إنشاء مساحات عمل منفصلة بمفاتيح مستقلة، وتتبع الموارد، وبروتوكولات الوصول.
             </p>
           </div>
         </div>
@@ -33,7 +33,7 @@ export default function TenantsControlPanel({ enrichedTenants }: TenantsControlP
           className="px-5 py-2.5 rounded-lg bg-red-600 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-red-950/30 hover:bg-red-500 active:scale-95 transition-all self-start sm:self-center"
         >
           <Plus className="h-4 w-4" />
-          Provision Space
+          إضافة فرع جديد
         </button>
       </div>
 

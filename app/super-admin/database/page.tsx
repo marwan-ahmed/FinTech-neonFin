@@ -33,13 +33,13 @@ export default async function DatabaseOperationsPage() {
   ]);
 
   const tables = [
-    { name: 'tenants', rows: rTenants.count, desc: 'Multi-tenant isolated infrastructure profiles', category: 'Core' },
-    { name: 'users', rows: rUsers.count, desc: 'Security identities and access controls', category: 'Core' },
-    { name: 'investors', rows: rInvestors.count, desc: 'Capital sources and fund providers', category: 'Finance' },
-    { name: 'loans', rows: rLoans.count, desc: 'Debt accounts and financial contracts', category: 'Finance' },
-    { name: 'loan_schedules', rows: rSchedules.count, desc: 'Amortization timetables and due dates', category: 'Finance' },
-    { name: 'kyc_applications', rows: rKyc.count, desc: 'Identity verifications and risk reviews', category: 'Verification' },
-    { name: 'audit_logs', rows: rAudits.count, desc: 'Root immutable operational trails', category: 'Security' },
+    { name: 'tenants', rows: rTenants.count, desc: 'ملفات تعريف بنية تحتية معزولة للمستأجرين المتعددين', category: 'أساسي' },
+    { name: 'users', rows: rUsers.count, desc: 'هويات الأمان وضوابط الوصول', category: 'أساسي' },
+    { name: 'investors', rows: rInvestors.count, desc: 'مصادر رأس المال وموفري الأموال', category: 'مالي' },
+    { name: 'loans', rows: rLoans.count, desc: 'حسابات الديون والعقود المالية', category: 'مالي' },
+    { name: 'loan_schedules', rows: rSchedules.count, desc: 'جداول الاستهلاك وتواريخ الاستحقاق', category: 'مالي' },
+    { name: 'kyc_applications', rows: rKyc.count, desc: 'التحقق من الهوية ومراجعة المخاطر', category: 'تحقق' },
+    { name: 'audit_logs', rows: rAudits.count, desc: 'سجلات تشغيلية جذرية غير قابلة للتغيير', category: 'أمني' },
   ];
 
   // ── 2. Dynamic PostgreSQL Catalog Metadata Querying ──────────
@@ -72,10 +72,10 @@ export default async function DatabaseOperationsPage() {
       <div>
         <div className="flex items-center gap-2 mb-1 text-xs text-[#737373] uppercase font-bold tracking-widest">
           <Database className="h-3 w-3 text-red-500" />
-          <span>PostgreSQL Server Engine</span>
+          <span>محرك قاعدة بيانات PostgreSQL</span>
         </div>
-        <h1 className="text-3xl font-bold tracking-tight">Database Operations</h1>
-        <p className="text-[#a3a3a3] mt-2">Real-time query metrics, storage aggregates, and table index analysis.</p>
+        <h1 className="text-3xl font-bold tracking-tight">عمليات قاعدة البيانات</h1>
+        <p className="text-[#a3a3a3] mt-2">مقاييس الاستعلام في الوقت الفعلي، مجاميع التخزين، وتحليل فهرس الجداول.</p>
       </div>
 
       {/* System Engine Stats Matrix */}
@@ -83,7 +83,7 @@ export default async function DatabaseOperationsPage() {
         
         <div className="p-5 rounded-xl border border-[#262626] bg-[#0f0f0f] flex flex-col justify-between">
           <div className="flex items-center justify-between text-[#737373] text-xs uppercase font-bold mb-2">
-            <span>Platform Data Size</span>
+            <span>حجم بيانات المنصة</span>
             <HardDrive className="h-4 w-4 text-blue-500" />
           </div>
           <div>
@@ -94,7 +94,7 @@ export default async function DatabaseOperationsPage() {
 
         <div className="p-5 rounded-xl border border-[#262626] bg-[#0f0f0f] flex flex-col justify-between">
           <div className="flex items-center justify-between text-[#737373] text-xs uppercase font-bold mb-2">
-            <span>Active Pool Sockets</span>
+            <span>الاتصالات النشطة</span>
             <Activity className="h-4 w-4 text-emerald-500" />
           </div>
           <div>
@@ -105,23 +105,23 @@ export default async function DatabaseOperationsPage() {
 
         <div className="p-5 rounded-xl border border-[#262626] bg-[#0f0f0f] flex flex-col justify-between">
           <div className="flex items-center justify-between text-[#737373] text-xs uppercase font-bold mb-2">
-            <span>Query Latency Index</span>
+            <span>مؤشر استجابة الاستعلام</span>
             <CheckCircle className="h-4 w-4 text-purple-500" />
           </div>
           <div>
             <p className="text-2xl font-extrabold text-white">{queryPerformance}</p>
-            <p className="text-[10px] text-[#525252] mt-1 font-mono">Health status: Healthy</p>
+            <p className="text-[10px] text-[#525252] mt-1 font-mono">حالة النظام: صحي</p>
           </div>
         </div>
 
         <div className="p-5 rounded-xl border border-[#262626] bg-[#0f0f0f] flex flex-col justify-between">
           <div className="flex items-center justify-between text-[#737373] text-xs uppercase font-bold mb-2">
-            <span>Instance Version</span>
+            <span>إصدار النظام</span>
             <Layers className="h-4 w-4 text-orange-500" />
           </div>
           <div>
             <p className="text-sm font-bold text-white truncate" title={pgVersion}>{pgVersion}</p>
-            <p className="text-[10px] text-[#525252] mt-1 font-mono">Neon Serverless Proxy</p>
+            <p className="text-[10px] text-[#525252] mt-1 font-mono">وكيل النيون بدون خادم</p>
           </div>
         </div>
       </div>
@@ -133,8 +133,8 @@ export default async function DatabaseOperationsPage() {
             <Layers className="h-4 w-4 text-[#a3a3a3]" />
           </div>
           <div>
-            <h3 className="font-semibold text-white">Table Statistics</h3>
-            <p className="text-xs text-[#737373] mt-0.5">Real-time row allocation metrics across active Drizzle Schemas.</p>
+            <h3 className="font-semibold text-white">إحصائيات الجداول</h3>
+            <p className="text-xs text-[#737373] mt-0.5">مقاييس تخصيص الصفوف في الوقت الفعلي عبر مخططات قواعد البيانات النشطة.</p>
           </div>
         </div>
 
@@ -142,10 +142,10 @@ export default async function DatabaseOperationsPage() {
           <table className="w-full text-sm text-left border-collapse">
             <thead className="text-xs uppercase bg-[#0a0a0a] text-[#737373] border-b border-[#262626]">
               <tr>
-                <th className="px-6 py-4 font-semibold">Category</th>
-                <th className="px-6 py-4 font-semibold">Relation Name</th>
-                <th className="px-6 py-4 font-semibold">Scope Description</th>
-                <th className="px-6 py-4 font-semibold text-right">Active Tuple Count</th>
+                <th className="px-6 py-4 font-semibold">الفئة</th>
+                <th className="px-6 py-4 font-semibold">اسم الجدول</th>
+                <th className="px-6 py-4 font-semibold">الوصف</th>
+                <th className="px-6 py-4 font-semibold text-right">عدد السجلات الفعالة</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#262626] text-[#d4d4d4]">
@@ -154,9 +154,9 @@ export default async function DatabaseOperationsPage() {
                   {/* Category Badge */}
                   <td className="px-6 py-4">
                     <span className={`px-2 py-0.5 text-[10px] font-bold tracking-wider rounded border ${
-                      tbl.category === 'Core' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                      tbl.category === 'Finance' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                      tbl.category === 'Security' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                      tbl.category === 'أساسي' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                      tbl.category === 'مالي' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                      tbl.category === 'أمني' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
                       'bg-[#1a1a1a] text-[#a3a3a3] border-[#262626]'
                     }`}>
                       {tbl.category}
@@ -188,16 +188,16 @@ export default async function DatabaseOperationsPage() {
         </div>
         <div className="flex-1">
           <h4 className="font-bold text-white text-sm flex items-center gap-2">
-            Superuser Access Vector
-            <span className="px-1.5 py-0.5 text-[9px] font-bold tracking-widest bg-red-600 text-white uppercase rounded animate-pulse">Hot</span>
+            الوصول بصلاحيات الإدارة
+            <span className="px-1.5 py-0.5 text-[9px] font-bold tracking-widest bg-red-600 text-white uppercase rounded animate-pulse">نشط</span>
           </h4>
           <p className="text-[#a3a3a3] text-xs mt-0.5 leading-relaxed">
-            Mutation capabilities (drop, truncate, reindex) are currently restricted to local CLI contexts via <code className="font-mono px-1 py-0.5 rounded bg-[#261a1a] text-red-400">drizzle-kit push</code> for system integrity.
+            عمليات الحذف والتعديل المباشر مقيدة حالياً للحفاظ على سلامة النظام، وتتم عبر سطر الأوامر فقط باستخدام <code className="font-mono px-1 py-0.5 rounded bg-[#261a1a] text-red-400">drizzle-kit push</code>.
           </p>
         </div>
         <div className="flex items-center gap-1.5 text-xs font-mono text-emerald-400 font-bold bg-emerald-950/20 border border-emerald-900/30 px-3 py-1.5 rounded">
           <CheckCircle className="h-3.5 w-3.5" />
-          Schemas Synced
+          تم مزامنة قواعد البيانات
         </div>
       </div>
 
