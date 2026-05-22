@@ -54,8 +54,9 @@ export async function POST(request: Request) {
       path: '/',
     };
 
-    // Return successful response with the cookie
-    const response = NextResponse.json({ success: true }, { status: 200 });
+    // Return successful response with the cookie and user role
+    const userRole = existingUser?.role || (isSuperAdmin ? 'superadmin' : 'admin');
+    const response = NextResponse.json({ success: true, role: userRole }, { status: 200 });
     response.cookies.set(options);
     
     return response;

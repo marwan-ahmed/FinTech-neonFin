@@ -76,7 +76,7 @@ export default async function DashboardLayout({
               نيون <span className="text-[#10b981]">فين</span>
             </span>
           </div>
-          <DashboardNav />
+          <DashboardNav role={session.role as string | undefined} />
         </div>
         <div className="flex items-center gap-2 lg:gap-4">
           <NotificationsPopover />

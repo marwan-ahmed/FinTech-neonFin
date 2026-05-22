@@ -56,7 +56,12 @@ export default function LoginPage() {
     });
 
     if (res.ok) {
-      window.location.href = '/dashboard';
+      const data = await res.json();
+      if (data.role === 'superadmin') {
+        window.location.href = '/super-admin';
+      } else {
+        window.location.href = '/dashboard';
+      }
     } else {
       const data = await res.json().catch(() => ({ error: 'Failed to create session on the server.' }));
       setError(data.error || 'Failed to create session on the server.');

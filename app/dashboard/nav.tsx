@@ -28,7 +28,7 @@ const links = [
   { href: '/dashboard/account', label: 'حسابي', icon: UserCog },
 ];
 
-export default function DashboardNav() {
+export default function DashboardNav({ role }: { role?: string }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -51,6 +51,15 @@ export default function DashboardNav() {
     <>
       {/* ─── Desktop Navigation ─── */}
       <div className="hidden lg:flex gap-1 h-full text-sm font-medium text-[#737373]">
+        {role === 'superadmin' && (
+          <Link
+            href="/super-admin"
+            className="flex items-center gap-1.5 h-full px-3 border-b-2 transition-all duration-200 hover:text-white text-xs border-transparent text-yellow-500"
+          >
+            <ShieldCheck size={14} />
+            لوحة الإدارة
+          </Link>
+        )}
         {links.map((link) => {
           const isActive = pathname === link.href;
           const Icon = link.icon;
@@ -101,17 +110,23 @@ export default function DashboardNav() {
                   نيون <span className="text-[#10b981]">فين</span>
                 </span>
               </div>
-              <button
-                onClick={() => setMobileOpen(false)}
-                className="text-[#737373] hover:text-white transition-colors"
-                aria-label="إغلاق القائمة"
-              >
+              <button onClick={() => setMobileOpen(false)} className="text-[#737373] hover:text-white">
                 <X size={20} />
               </button>
             </div>
 
-            {/* Nav Links */}
-            <nav className="flex flex-col p-3 gap-1 stagger-children">
+            {/* Links */}
+            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
+              {role === 'superadmin' && (
+                <Link
+                  href="/super-admin"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-[#ededed] hover:bg-[#262626] text-yellow-500"
+                >
+                  <ShieldCheck size={18} />
+                  <span className="font-medium text-sm">لوحة الإدارة</span>
+                </Link>
+              )}
               {links.map((link) => {
                 const isActive = pathname === link.href;
                 const Icon = link.icon;
