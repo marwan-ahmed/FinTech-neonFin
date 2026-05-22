@@ -7,6 +7,7 @@ import { Server, Users, Wallet, CreditCard, AlertTriangle, TrendingUp, ShieldChe
 import TenantsTable, { type TenantRow } from "./TenantsTable";
 import PlatformCharts from "./PlatformCharts";
 import SubscriptionRequests from "./SubscriptionRequests";
+import SubscriptionPlansManager from "./SubscriptionPlansManager";
 
 export default async function SuperAdminPage() {
   const user = await getCurrentUser();
@@ -192,6 +193,9 @@ export default async function SuperAdminPage() {
 
       {/* Charts Section — Side-by-side layout */}
       <PlatformCharts growthData={growthData} distributionData={distributionData} />
+
+      {/* Subscription Plans Manager */}
+      <SubscriptionPlansManager />
 
       {/* Subscription Requests */}
       <SubscriptionRequests />
