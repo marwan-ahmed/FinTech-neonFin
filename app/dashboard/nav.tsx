@@ -148,7 +148,7 @@ export default function DashboardNav({ role }: { role?: string }) {
                   </Link>
                 );
               })}
-            </nav>
+            </div>
 
             {/* Footer */}
             <div className="mt-auto p-4 border-t border-[#262626] text-center">
