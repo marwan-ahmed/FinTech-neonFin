@@ -34,16 +34,60 @@ export default async function DashboardLayout({
   }
 
   if ((session as any).isPending) {
+    const selectedPlan = (session as any).selectedPlan || 'monthly';
+    const planPrice = (session as any).planPrice || 50000;
+    
+    const planName = selectedPlan === 'monthly' 
+      ? 'الاشتراك الشهري' 
+      : selectedPlan === 'yearly' 
+        ? 'الاشتراك السنوي' 
+        : selectedPlan === 'lifetime' 
+          ? 'شراء مدى الحياة' 
+          : 'الاشتراك الشهري';
+
+    const planPriceFormatted = Number(planPrice).toLocaleString('ar-IQ');
+    const email = session.email || '';
+    const messageText = `مرحباً، قمت بالتسجيل في منصة نيون فين بخطة [${planName}] بسعر [${planPriceFormatted}] د.ع، وأرغب بإرسال إثبات الدفع لتفعيل حسابي. البريد المسجَّل: [${email}].`;
+    const whatsappUrl = `https://wa.me/9647760776774?text=${encodeURIComponent(messageText)}`;
+
     return (
       <div className="flex flex-col items-center justify-center min-h-screen w-full bg-[#0a0a0a] p-6 text-center">
         <div className="w-20 h-20 bg-yellow-500/10 rounded-full flex items-center justify-center mb-6">
           <div className="w-10 h-10 bg-yellow-500 rounded-full animate-pulse"></div>
         </div>
         <h1 className="text-3xl font-bold text-white mb-2">حسابك قيد المراجعة</h1>
-        <p className="text-[#a3a3a3] max-w-md mb-8">
-          تم استلام طلب التسجيل الخاص بك بنجاح. حسابك الآن قيد المراجعة من قبل الإدارة، وسيتم تفعيله خلال مدة أقصاها 48 ساعة.
+        
+        <div className="my-6 p-4 rounded-xl border border-[#262626] bg-[#141414] max-w-md w-full text-right">
+          <p className="text-xs text-[#737373] uppercase tracking-wider mb-2">تفاصيل الطلب والاشتراك:</p>
+          <div className="flex justify-between items-center py-1.5 border-b border-[#262626]/50">
+            <span className="text-xs text-[#737373]">الخطة المختارة:</span>
+            <span className="text-sm font-bold text-[#10b981]">{planName}</span>
+          </div>
+          <div className="flex justify-between items-center py-1.5 border-b border-[#262626]/50">
+            <span className="text-xs text-[#737373]">سعر الاشتراك:</span>
+            <span className="text-sm font-mono font-bold text-white">{planPriceFormatted} د.ع</span>
+          </div>
+          <div className="flex justify-between items-center py-1.5">
+            <span className="text-xs text-[#737373]">البريد الإلكتروني:</span>
+            <span className="text-xs font-mono text-[#ededed]">{email}</span>
+          </div>
+        </div>
+
+        <p className="text-[#a3a3a3] max-w-md mb-8 text-sm leading-relaxed">
+          تم استلام طلب التسجيل الخاص بك بنجاح. حسابك الآن قيد المراجعة من قبل الإدارة، وسيتم تفعيله خلال مدة أقصاها 48 ساعة **بعد تأكيد استلام الدفع**.
         </p>
-        <LogoutButton />
+
+        <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md justify-center items-center mb-8">
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full sm:w-auto bg-[#10b981] hover:bg-[#34d399] text-black font-bold py-3 px-6 rounded-xl text-sm transition-all duration-200 hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] active:scale-95 flex justify-center items-center gap-2"
+          >
+            <span>إرسال إثبات الدفع عبر واتساب</span>
+          </a>
+          <LogoutButton />
+        </div>
       </div>
     );
   }

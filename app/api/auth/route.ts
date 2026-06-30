@@ -5,7 +5,7 @@ import { users, tenants } from '@/schema/schema';
 import { eq } from 'drizzle-orm';
 
 export async function POST(request: Request) {
-  const { idToken, fullName, phoneNumber } = await request.json();
+  const { idToken, fullName, phoneNumber, selectedPlan, planPrice } = await request.json();
 
   if (!idToken) {
     return NextResponse.json({ error: 'Missing idToken' }, { status: 400 });
@@ -29,6 +29,8 @@ export async function POST(request: Request) {
       // For first time users, create a tenant for them, then create their user profile
       const newTenant = await db.insert(tenants).values({
         name: `Organization (${decodedToken.email || decodedToken.uid})`,
+        selectedPlan: (selectedPlan as any) || 'monthly',
+        planPrice: planPrice || 50000,
       }).returning();
 
       await db.insert(users).values({

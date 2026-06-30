@@ -12,6 +12,8 @@ export const subscriptionTypeEnum = pgEnum('subscription_type', ['fixed', 'perce
 export const tenantSubscriptionStatusEnum = pgEnum('tenant_subscription_status', ['trial', 'active', 'past_due', 'canceled', 'unpaid']);
 export const invoiceStatusEnum = pgEnum('invoice_status', ['draft', 'open', 'paid', 'void', 'uncollectible']);
 
+export const selectedPlanEnum = pgEnum('selected_plan', ['monthly', 'yearly', 'lifetime']);
+
 export const tenants = pgTable('tenants', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
@@ -19,6 +21,8 @@ export const tenants = pgTable('tenants', {
   subscriptionStatus: text('subscription_status', { enum: ['trial', 'active', 'expired'] }).default('trial').notNull(),
   subscriptionPlan: subscriptionPlanEnum('subscription_plan').default('none').notNull(),
   subscriptionEndDate: timestamp('subscription_end_date'),
+  selectedPlan: selectedPlanEnum('selected_plan'),
+  planPrice: integer('plan_price'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -229,3 +233,11 @@ export const investorDistributions = pgTable('investor_distributions', {
   index('investor_distributions_loan_idx').on(table.loanId),
   index('investor_distributions_schedule_idx').on(table.scheduleId)
 ]);
+
+export const contactMessages = pgTable('contact_messages', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  email: text('email').notNull(),
+  message: text('message').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});

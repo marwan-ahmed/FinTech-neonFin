@@ -12,6 +12,17 @@ export function getFirebaseAuth(): Auth {
 
   const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
   if (!apiKey) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('⚠️ WARNING: NEXT_PUBLIC_FIREBASE_API_KEY is not configured in local environment.');
+      const dummyConfig = {
+        apiKey: 'DUMMY_KEY_FOR_DEV',
+        authDomain: 'dummy.firebaseapp.com',
+        projectId: 'dummy-project',
+      };
+      const app = !getApps().length ? initializeApp(dummyConfig) : getApp();
+      clientAuthInstance = getAuth(app);
+      return clientAuthInstance;
+    }
     throw new Error('NEXT_PUBLIC_FIREBASE_API_KEY is not configured. Please add Firebase credentials to your environment variables.');
   }
 
@@ -37,6 +48,17 @@ export function getFirebaseFirestore(): Firestore {
 
   const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
   if (!apiKey) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('⚠️ WARNING: NEXT_PUBLIC_FIREBASE_API_KEY is not configured in local environment.');
+      const dummyConfig = {
+        apiKey: 'DUMMY_KEY_FOR_DEV',
+        authDomain: 'dummy.firebaseapp.com',
+        projectId: 'dummy-project',
+      };
+      const app = !getApps().length ? initializeApp(dummyConfig) : getApp();
+      clientFirestoreInstance = getFirestore(app);
+      return clientFirestoreInstance;
+    }
     throw new Error('NEXT_PUBLIC_FIREBASE_API_KEY is not configured. Please add Firebase credentials to your environment variables.');
   }
 

@@ -33,7 +33,35 @@ function getInitializedAuth() {
       if (!serviceAccount.clientEmail) missing.push('FIREBASE_CLIENT_EMAIL');
       if (!serviceAccount.privateKey) missing.push('FIREBASE_PRIVATE_KEY');
 
-      console.error(`FIREBASE ADMIN NOT CONFIGURED: Missing variables: ${missing.join(', ')}`);
+      console.warn(`⚠️ WARNING: FIREBASE ADMIN NOT CONFIGURED. Missing variables: ${missing.join(', ')}`);
+      
+      if (process.env.NODE_ENV === 'development') {
+        // Return a mock auth instance in development to prevent server crash
+        return {
+          verifySessionCookie: async (cookie: string) => {
+            if (cookie && cookie.startsWith('mock-session-cookie:')) {
+              const email = cookie.substring('mock-session-cookie:'.length);
+              return { uid: 'mock-uid-' + email.split('@')[0], email };
+            }
+            return { uid: 'mock-uid', email: 'mock@system.io' };
+          },
+          verifyIdToken: async (token: string) => {
+            if (token && token.startsWith('mock-id-token:')) {
+              const email = token.substring('mock-id-token:'.length);
+              return { uid: 'mock-uid-' + email.split('@')[0], email };
+            }
+            return { uid: 'mock-uid', email: 'mock@system.io' };
+          },
+          createSessionCookie: async (token: string) => {
+            if (token && token.startsWith('mock-id-token:')) {
+              const email = token.substring('mock-id-token:'.length);
+              return 'mock-session-cookie:' + email;
+            }
+            return 'mock-session-cookie';
+          },
+        } as any;
+      }
+      
       throw new Error(`Firebase Admin credentials not configured. Missing variables: ${missing.join(', ')}`);
     }
   }

@@ -32,7 +32,12 @@ export async function verifySession() {
             return { isFrozen: true, ...claimsWithRole };
           }
           if (tenant.status === 'pending') {
-            return { isPending: true, ...claimsWithRole };
+            return { 
+              isPending: true, 
+              selectedPlan: tenant.selectedPlan,
+              planPrice: tenant.planPrice,
+              ...claimsWithRole 
+            };
           }
           if (tenant.subscriptionEndDate && new Date() > new Date(tenant.subscriptionEndDate)) {
             return { isExpired: true, ...claimsWithRole };

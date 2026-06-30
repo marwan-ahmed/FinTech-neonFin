@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { getFirebaseAuth } from '@/lib/firebase';
@@ -15,9 +15,23 @@ export default function LoginPage() {
   const [fullName, setFullName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState('monthly');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const plan = params.get('plan');
+      if (plan) {
+        setIsSignUp(true);
+        if (['monthly', 'yearly', 'lifetime'].includes(plan)) {
+          setSelectedPlan(plan);
+        }
+      }
+    }
+  }, []);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,16 +43,40 @@ export default function LoginPage() {
     setError(null);
     try {
       const auth = getFirebaseAuth();
+      const isDummyAuth = !process.env.NEXT_PUBLIC_FIREBASE_API_KEY || auth.app.options.apiKey === 'DUMMY_KEY_FOR_DEV';
+
       let userCredential;
-      if (isSignUp) {
-        userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        await updateProfile(userCredential.user, { displayName: fullName });
+      if (isDummyAuth) {
+        // Mock user credential for local development testing
+        userCredential = {
+          user: {
+            uid: 'mock-uid-' + email.split('@')[0],
+            email: email,
+            displayName: fullName || email.split('@')[0],
+            getIdToken: async (forceRefresh?: boolean) => 'mock-id-token:' + email,
+          }
+        };
       } else {
-        userCredential = await signInWithEmailAndPassword(auth, email, password);
+        if (isSignUp) {
+          userCredential = await createUserWithEmailAndPassword(auth, email, password);
+          await updateProfile(userCredential.user, { displayName: fullName });
+        } else {
+          userCredential = await signInWithEmailAndPassword(auth, email, password);
+        }
       }
       
       const idToken = await userCredential.user.getIdToken(true);
-      await createSession(idToken, isSignUp ? { fullName, phoneNumber } : undefined);
+      await createSession(
+        idToken,
+        isSignUp
+          ? {
+              fullName,
+              phoneNumber,
+              selectedPlan,
+              planPrice: selectedPlan === 'monthly' ? 50000 : selectedPlan === 'yearly' ? 350000 : 750000
+            }
+          : undefined
+      );
     } catch (err: any) {
       handleAuthError(err);
     } finally {
@@ -46,7 +84,10 @@ export default function LoginPage() {
     }
   };
 
-  const createSession = async (idToken: string, profileData?: { fullName: string, phoneNumber: string }) => {
+  const createSession = async (
+    idToken: string,
+    profileData?: { fullName: string; phoneNumber: string; selectedPlan: string; planPrice: number }
+  ) => {
     const res = await fetch('/api/auth', {
       method: 'POST',
       headers: {
@@ -87,10 +128,17 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
     try {
-      const provider = new GoogleAuthProvider();
       const auth = getFirebaseAuth();
-      const userCredential = await signInWithPopup(auth, provider);
-      const idToken = await userCredential.user.getIdToken();
+      const isDummyAuth = !process.env.NEXT_PUBLIC_FIREBASE_API_KEY || auth.app.options.apiKey === 'DUMMY_KEY_FOR_DEV';
+
+      let idToken;
+      if (isDummyAuth) {
+        idToken = 'mock-id-token:google-mock@system.io';
+      } else {
+        const provider = new GoogleAuthProvider();
+        const userCredential = await signInWithPopup(auth, provider);
+        idToken = await userCredential.user.getIdToken();
+      }
       await createSession(idToken);
     } catch (err: any) {
       handleAuthError(err);
@@ -158,6 +206,19 @@ export default function LoginPage() {
                   placeholder="07xxxxxxxx"
                   required={isSignUp}
                 />
+              </div>
+              <div className="animate-fade-in-up" style={{animationDelay: '120ms'}}>
+                <label className="mb-1.5 block text-[10px] uppercase tracking-widest text-[#737373]">الخطة المطلوبة</label>
+                <select
+                  value={selectedPlan}
+                  onChange={(e) => setSelectedPlan(e.target.value)}
+                  className="w-full rounded-lg border border-[#262626] bg-[#0f0f0f] px-4 py-2.5 text-sm text-[#ededed] focus:border-[#10b981] focus:shadow-[0_0_0_3px_rgba(16,185,129,0.1)] outline-none transition-all duration-200"
+                  required={isSignUp}
+                >
+                  <option value="monthly">اشتراك شهري (50,000 د.ع / شهرياً)</option>
+                  <option value="yearly">اشتراك سنوي (350,000 د.ع / سنوياً)</option>
+                  <option value="lifetime">اشتراك مدى الحياة (750,000 د.ع / دفعة واحدة)</option>
+                </select>
               </div>
             </>
           )}
